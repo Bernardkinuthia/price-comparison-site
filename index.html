@@ -605,10 +605,14 @@ function updateProductPrices(priceData) {
         const productLink = product.affiliate_url || product.link;
         
         if (productLink) {
-            // Try to find matching price entry by URL
-            const matchingPriceEntry = priceData.find(priceItem => {
-                return priceItem.affiliate_url === productLink;
-            });
+    console.log('CSV product link:', productLink);
+    console.log('Looking for match in JSON...');
+    
+    // Try to find matching price entry by URL
+    const matchingPriceEntry = priceData.find(priceItem => {
+        console.log('Comparing with JSON link:', priceItem.affiliate_url);
+        return priceItem.affiliate_url === productLink;
+    });
             
             if (matchingPriceEntry && matchingPriceEntry.price !== "N/A") {
                 console.log(`Matched product: ${product.affiliate_url} with price ${matchingPriceEntry.price}`);
