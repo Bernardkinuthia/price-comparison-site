@@ -511,6 +511,14 @@
             
             console.log(`Parsed ${productsData.length} products from CSV`);
         }
+		
+		function debugCSVStructure() {
+    if (productsData.length > 0) {
+        console.log('CSV Headers found:', Object.keys(productsData[0]));
+        console.log('First product sample:', productsData[0]);
+        console.log('Sample link field:', productsData[0].link);
+    }
+}
 
         function parseCSVLine(line) {
             const result = [];
@@ -565,6 +573,10 @@ async function populateTable() {
     
     // Apply initial filters
     apply_filters();
+	
+	parseCSVData(csvText);
+	debugCSVStructure(); // Add this line
+	populateTable();
 }
 async function updatePricesFromJSON() {
     try {
@@ -597,19 +609,37 @@ async function updatePricesFromJSON() {
 }
 
 function updateProductPrices(priceData) {
-    productsData.forEach(product => {
-        // Try to match by affiliate_link URL
-const productLink = product.link; // Use the clean short link column from CSV
-
-if (productLink) {
-    const matchingPriceEntry = priceData.find(priceItem => priceItem.affiliate_url === productLink);
+    console.log('Updating prices for', productsData.length, 'products');
+    let matchedCount = 0;
+    let updatedCount = 0;
     
-    if (matchingPriceEntry && matchingPriceEntry.price && matchingPriceEntry.price !== "N/A") {
-        product.price = matchingPriceEntry.price;
-        product.last_updated = matchingPriceEntry.last_updated;
-    }
-}
+    productsData.forEach((product, index) => {
+        // Match CSV 'link' field with JSON 'affiliate_url' field
+        const matchingPriceEntry = priceData.find(priceItem => 
+            priceItem.affiliate_url === product.link
+        );
+        
+        if (matchingPriceEntry) {
+            matchedCount++;
+            console.log(`Match found for product ${index}:`, product.link);
+            
+            // Update the product if price is available and not "N/A"
+            if (matchingPriceEntry.price && matchingPriceEntry.price !== "N/A") {
+                const oldPrice = product.price || 'No price';
+                product.price = matchingPriceEntry.price;
+                product.last_updated = matchingPriceEntry.last_updated;
+                updatedCount++;
+                
+                console.log(`Price updated for product ${index}: ${oldPrice} -> ${product.price}`);
+            } else {
+                console.log(`Price not available for product ${index}: ${matchingPriceEntry.price}`);
+            }
+        } else {
+            console.log(`No match found for product ${index} with link:`, product.link);
+        }
     });
+    
+    console.log(`Matching complete: ${matchedCount} products matched, ${updatedCount} prices updated`);
 }
 
 function extractProductNameFromLink(affiliateLink) {
@@ -716,15 +746,20 @@ function createProductRow(product) {
             return condition.charAt(0).toUpperCase() + condition.slice(1);
         }
 
-// New function to format affiliate links
+// Function to format affiliate links
 function formatAffiliateLink(product) {
-    // If we have both link URL and display text
+    // If we have both link URL and display text (affiliate_url as display text)
     if (product.link && product.affiliate_url) {
         const displayText = product.affiliate_url.trim();
         return `<a href="${product.link}" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
     }
     
-    // If affiliate_url contains HTML (existing format - backward compatibility)
+    // If only link is available, use it as both URL and display text
+    if (product.link) {
+        return `<a href="${product.link}" target="_blank" rel="noopener noreferrer">${product.link}</a>`;
+    }
+    
+    // If affiliate_url contains HTML (backward compatibility)
     if (product.affiliate_url && product.affiliate_url.includes('<a href=')) {
         return product.affiliate_url;
     }
