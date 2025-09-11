@@ -568,16 +568,19 @@ async function populateTable() {
 }
 async function updatePricesFromJSON() {
     try {
-        // Load JSON from GitHub raw file (adjust URL to match your repo)
+        console.log('Starting to load price updates from JSON...');
+        
         const response = await fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/prices.json');
         
         if (!response.ok) {
             console.warn(`JSON price update failed: ${response.status}`);
-            return; // Don't throw error, just continue without price updates
+            return;
         }
         
         const priceData = await response.json();
-        console.log('Price updates loaded successfully');
+        console.log(`Loaded ${priceData.length} price entries from JSON`);
+        console.log('First JSON entry:', priceData[0]);
+        console.log('First CSV product:', productsData[0]);
         
         // Update prices in the productsData array
         updateProductPrices(priceData);
@@ -588,11 +591,10 @@ async function updatePricesFromJSON() {
         // Recalculate price per watt with new prices
         calculatePricePerWatt();
         
-        console.log('Prices updated successfully');
+        console.log('Price update process completed');
         
     } catch (error) {
-        console.warn('Error loading price updates (continuing with CSV prices):', error);
-        // Continue silently - site will work with CSV prices
+        console.warn('Error loading price updates:', error);
     }
 }
 
