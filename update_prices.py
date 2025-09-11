@@ -100,16 +100,25 @@ if not all([access_key, secret_key, associate_tag]):
 
 amazon_api = AmazonPAAPI(access_key, secret_key, associate_tag)
 
+# Function to clean BOM from string
+def remove_bom(text):
+    """Remove UTF-8 BOM from string"""
+    if text.startswith('\ufeff'):
+        return text[1:]
+    return text
+
 # Read products from CSV
 products = []
 try:
     print("📖 Reading products from CSV...")
-    with open("products.csv", newline="", encoding="utf-8") as csvfile:
+    
+    # Read with UTF-8-SIG encoding to handle BOM automatically
+    with open("products.csv", newline="", encoding="utf-8-sig") as csvfile:
         content = csvfile.read()
         print(f"🔍 File size: {len(content)} characters")
     
     # Reset file pointer and read with csv module
-    with open("products.csv", newline="", encoding="utf-8") as csvfile:
+    with open("products.csv", newline="", encoding="utf-8-sig") as csvfile:
         reader = csv.DictReader(csvfile)
         headers = reader.fieldnames
         print(f"🔍 CSV Headers: {headers}")
@@ -117,9 +126,16 @@ try:
         if not headers:
             raise Exception("No headers found in CSV file")
         
-        # Clean headers
+        # Clean headers (remove BOM and whitespace)
         if headers:
-            reader.fieldnames = [name.strip() if name else name for name in headers]
+            cleaned_headers = []
+            for name in headers:
+                if name:
+                    cleaned_name = remove_bom(name.strip())
+                    cleaned_headers.append(cleaned_name)
+                else:
+                    cleaned_headers.append(name)
+            reader.fieldnames = cleaned_headers
             print(f"🔍 Cleaned Headers: {reader.fieldnames}")
         
         row_count = 0
@@ -128,17 +144,22 @@ try:
             # Clean row data
             cleaned_row = {}
             for k, v in row.items():
-                clean_key = k.strip() if k else k
+                clean_key = remove_bom(k.strip()) if k else k
                 clean_value = v.strip() if v else v
                 cleaned_row[clean_key] = clean_value
             
+            # Debug: Print the actual key names for first row
+            if row_count == 1:
+                print(f"🔍 First row keys: {list(cleaned_row.keys())}")
+                print(f"🔍 First row ASIN value: '{cleaned_row.get('asin', 'KEY_NOT_FOUND')}'")
+            
             # Check if ASIN exists and is valid
             asin = cleaned_row.get('asin', '').strip()
-            if asin and len(asin) == 10:  # Amazon ASINs are 10 characters
+            if asin and len(asin) == 10 and asin.isalnum():  # Amazon ASINs are 10 alphanumeric characters
                 products.append(cleaned_row)
                 print(f"  ✅ Row {row_count}: ASIN '{asin}' - Valid")
             else:
-                print(f"  ⚠️ Row {row_count}: ASIN '{asin}' - Invalid or missing")
+                print(f"  ⚠️ Row {row_count}: ASIN '{asin}' - Invalid or missing (length: {len(asin) if asin else 0})")
         
     print(f"✅ Successfully loaded {len(products)} valid products from {row_count} total rows")
     
@@ -151,6 +172,13 @@ except Exception as e:
             print(f"🔍 First few lines of CSV:")
             for i, line in enumerate(lines[:5]):
                 print(f"  Line {i+1}: {repr(line)}")
+        
+        # Also try reading the first line to check for BOM
+        with open("products.csv", "rb") as f:
+            first_bytes = f.read(10)
+            print(f"🔍 First 10 bytes of file: {first_bytes}")
+            if first_bytes.startswith(b'\xef\xbb\xbf'):
+                print("🔍 UTF-8 BOM detected in file!")
     except:
         pass
     exit(1)
