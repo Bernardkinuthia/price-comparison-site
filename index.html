@@ -608,11 +608,19 @@ function updateProductPrices(priceData) {
     console.log('CSV product link:', productLink);
     console.log('Looking for match in JSON...');
     
-    // Try to find matching price entry by URL
-    const matchingPriceEntry = priceData.find(priceItem => {
-        console.log('Comparing with JSON link:', priceItem.affiliate_url);
-        return priceItem.affiliate_url === productLink;
-    });
+    // Try to find matching price entry by title
+const matchingPriceEntry = priceData.find(priceItem => {
+    console.log('Comparing CSV title:', productLink);
+    console.log('With JSON title:', priceItem.title);
+    
+    // Check if titles match (case insensitive, first 50 characters)
+    const csvTitle = productLink.toLowerCase().substring(0, 50);
+    const jsonTitle = priceItem.title.toLowerCase().substring(0, 50);
+    
+    return csvTitle === jsonTitle || 
+           csvTitle.includes(jsonTitle.substring(0, 20)) ||
+           jsonTitle.includes(csvTitle.substring(0, 20));
+});
             
             if (matchingPriceEntry && matchingPriceEntry.price !== "N/A") {
                 console.log(`Matched product: ${product.affiliate_url} with price ${matchingPriceEntry.price}`);
