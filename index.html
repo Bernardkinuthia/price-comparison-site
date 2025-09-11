@@ -599,20 +599,16 @@ async function updatePricesFromJSON() {
 function updateProductPrices(priceData) {
     productsData.forEach(product => {
         // Try to match by affiliate_link URL
-		const productLink = product.affiliate_url;
+const productLink = product.link; // Use the clean short link column from CSV
 
 if (productLink) {
-    const matchingPriceEntry = priceData.find(priceItem => {
-        return priceItem.affiliate_url === productLink || 
-               (priceItem.title && product.affiliate_url && 
-                priceItem.title.toLowerCase().includes(extractProductNameFromLink(product.affiliate_url).toLowerCase()));
-    });
-            
-            if (matchingPriceEntry && matchingPriceEntry.price !== "N/A") {
-                product.price = matchingPriceEntry.price;
-                product.last_updated = matchingPriceEntry.last_updated;
-            }
-        }
+    const matchingPriceEntry = priceData.find(priceItem => priceItem.affiliate_url === productLink);
+    
+    if (matchingPriceEntry && matchingPriceEntry.price && matchingPriceEntry.price !== "N/A") {
+        product.price = matchingPriceEntry.price;
+        product.last_updated = matchingPriceEntry.last_updated;
+    }
+}
     });
 }
 
