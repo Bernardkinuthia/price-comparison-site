@@ -3,6 +3,14 @@ import hashlib, hmac, base64
 from urllib.parse import quote, urlencode
 import requests
 
+# Try to import openpyxl for Excel support
+try:
+    import openpyxl
+    EXCEL_SUPPORT = True
+except ImportError:
+    EXCEL_SUPPORT = False
+    print("📝 Note: Install openpyxl for Excel support (pip install openpyxl)")
+
 # Amazon credentials from GitHub secrets
 access_key = os.getenv("AMAZON_ACCESS_KEY")
 secret_key = os.getenv("AMAZON_SECRET_KEY")
@@ -93,6 +101,135 @@ class AmazonPAAPI:
             print(f"Request error: {e}")
             return None
 
+def read_json_products(filename):
+    """Read products from JSON file"""
+    print(f"📖 Reading products from JSON file: {filename}")
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        products = []
+        if isinstance(data, list):
+            # Array of products
+            for i, item in enumerate(data, 1):
+                if isinstance(item, dict) and 'asin' in item:
+                    asin = str(item['asin']).strip()
+                    if asin and len(asin) == 10 and asin.isalnum():
+                        products.append({
+                            'asin': asin,
+                            'title': item.get('title', ''),
+                            'affiliate_link': item.get('affiliate_link', '')
+                        })
+                        print(f"  ✅ Product {i}: ASIN '{asin}' - Valid")
+                    else:
+                        print(f"  ⚠️ Product {i}: ASIN '{asin}' - Invalid")
+        
+        return products
+    except Exception as e:
+        print(f"❌ Error reading JSON: {e}")
+        return []
+
+def read_txt_products(filename):
+    """Read products from plain text file"""
+    print(f"📖 Reading products from text file: {filename}")
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        products = []
+        for i, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line or line.startswith('#'):  # Skip empty lines and comments
+                continue
+            
+            # Support multiple formats:
+            # 1. Just ASIN: B0C5HYBQMW
+            # 2. ASIN|Title: B0C5HYBQMW|Product Name
+            # 3. ASIN|Title|Link: B0C5HYBQMW|Product Name|https://link.com
+            parts = line.split('|')
+            
+            asin = parts[0].strip()
+            title = parts[1].strip() if len(parts) > 1 else ''
+            affiliate_link = parts[2].strip() if len(parts) > 2 else ''
+            
+            if asin and len(asin) == 10 and asin.isalnum():
+                products.append({
+                    'asin': asin,
+                    'title': title,
+                    'affiliate_link': affiliate_link
+                })
+                print(f"  ✅ Line {i}: ASIN '{asin}' - Valid")
+            else:
+                print(f"  ⚠️ Line {i}: ASIN '{asin}' - Invalid")
+        
+        return products
+    except Exception as e:
+        print(f"❌ Error reading text file: {e}")
+        return []
+
+def read_excel_products(filename):
+    """Read products from Excel file"""
+    if not EXCEL_SUPPORT:
+        print("❌ Excel support not available. Install openpyxl: pip install openpyxl")
+        return []
+    
+    print(f"📖 Reading products from Excel file: {filename}")
+    try:
+        workbook = openpyxl.load_workbook(filename)
+        sheet = workbook.active
+        
+        # Find header row (usually row 1)
+        headers = {}
+        for col in range(1, sheet.max_column + 1):
+            cell_value = sheet.cell(row=1, column=col).value
+            if cell_value:
+                header_name = str(cell_value).strip().lower()
+                if 'asin' in header_name:
+                    headers['asin'] = col
+                elif 'title' in header_name or 'name' in header_name:
+                    headers['title'] = col
+                elif 'link' in header_name or 'url' in header_name:
+                    headers['affiliate_link'] = col
+        
+        print(f"🔍 Found headers: {headers}")
+        
+        if 'asin' not in headers:
+            print("❌ No ASIN column found in Excel file")
+            return []
+        
+        products = []
+        for row in range(2, sheet.max_row + 1):  # Start from row 2 (skip header)
+            asin_cell = sheet.cell(row=row, column=headers['asin'])
+            if not asin_cell.value:
+                continue
+            
+            asin = str(asin_cell.value).strip()
+            title = ''
+            affiliate_link = ''
+            
+            if 'title' in headers:
+                title_cell = sheet.cell(row=row, column=headers['title'])
+                title = str(title_cell.value or '').strip()
+            
+            if 'affiliate_link' in headers:
+                link_cell = sheet.cell(row=row, column=headers['affiliate_link'])
+                affiliate_link = str(link_cell.value or '').strip()
+            
+            if asin and len(asin) == 10 and asin.isalnum():
+                products.append({
+                    'asin': asin,
+                    'title': title,
+                    'affiliate_link': affiliate_link
+                })
+                print(f"  ✅ Row {row}: ASIN '{asin}' - Valid")
+            else:
+                print(f"  ⚠️ Row {row}: ASIN '{asin}' - Invalid")
+        
+        return products
+    except Exception as e:
+        print(f"❌ Error reading Excel file: {e}")
+        return []
+
 # Initialize API client
 if not all([access_key, secret_key, associate_tag]):
     print("❌ Missing Amazon API credentials")
@@ -100,94 +237,89 @@ if not all([access_key, secret_key, associate_tag]):
 
 amazon_api = AmazonPAAPI(access_key, secret_key, associate_tag)
 
-# Function to clean BOM from string
-def remove_bom(text):
-    """Remove UTF-8 BOM from string"""
-    if text.startswith('\ufeff'):
-        return text[1:]
-    return text
-
-# Read products from CSV
+# Try to read products from different file formats
 products = []
-try:
-    print("📖 Reading products from CSV...")
-    
-    # Read with UTF-8-SIG encoding to handle BOM automatically
-    with open("products.csv", newline="", encoding="utf-8-sig") as csvfile:
-        content = csvfile.read()
-        print(f"🔍 File size: {len(content)} characters")
-    
-    # Reset file pointer and read with csv module
-    with open("products.csv", newline="", encoding="utf-8-sig") as csvfile:
-        reader = csv.DictReader(csvfile)
-        headers = reader.fieldnames
-        print(f"🔍 CSV Headers: {headers}")
-        
-        if not headers:
-            raise Exception("No headers found in CSV file")
-        
-        # Clean headers (remove BOM and whitespace)
-        if headers:
-            cleaned_headers = []
-            for name in headers:
-                if name:
-                    cleaned_name = remove_bom(name.strip())
-                    cleaned_headers.append(cleaned_name)
-                else:
-                    cleaned_headers.append(name)
-            reader.fieldnames = cleaned_headers
-            print(f"🔍 Cleaned Headers: {reader.fieldnames}")
-        
-        row_count = 0
-        for row in reader:
-            row_count += 1
-            # Clean row data
-            cleaned_row = {}
-            for k, v in row.items():
-                clean_key = remove_bom(k.strip()) if k else k
-                clean_value = v.strip() if v else v
-                cleaned_row[clean_key] = clean_value
-            
-            # Debug: Print the actual key names for first row
-            if row_count == 1:
-                print(f"🔍 First row keys: {list(cleaned_row.keys())}")
-                print(f"🔍 First row ASIN value: '{cleaned_row.get('asin', 'KEY_NOT_FOUND')}'")
-            
-            # Check if ASIN exists and is valid
-            asin = cleaned_row.get('asin', '').strip()
-            if asin and len(asin) == 10 and asin.isalnum():  # Amazon ASINs are 10 alphanumeric characters
-                products.append(cleaned_row)
-                print(f"  ✅ Row {row_count}: ASIN '{asin}' - Valid")
-            else:
-                print(f"  ⚠️ Row {row_count}: ASIN '{asin}' - Invalid or missing (length: {len(asin) if asin else 0})")
-        
-    print(f"✅ Successfully loaded {len(products)} valid products from {row_count} total rows")
-    
-except Exception as e:
-    print(f"❌ Error reading CSV: {e}")
-    # Try to read raw file for debugging
-    try:
-        with open("products.csv", "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            print(f"🔍 First few lines of CSV:")
-            for i, line in enumerate(lines[:5]):
-                print(f"  Line {i+1}: {repr(line)}")
-        
-        # Also try reading the first line to check for BOM
-        with open("products.csv", "rb") as f:
-            first_bytes = f.read(10)
-            print(f"🔍 First 10 bytes of file: {first_bytes}")
-            if first_bytes.startswith(b'\xef\xbb\xbf'):
-                print("🔍 UTF-8 BOM detected in file!")
-    except:
-        pass
-    exit(1)
+possible_files = [
+    ('products.json', read_json_products),
+    ('products.txt', read_txt_products),
+    ('products.xlsx', read_excel_products),
+    ('products.xls', read_excel_products),
+    ('products.csv', None)  # We'll handle CSV separately if needed
+]
+
+for filename, reader_func in possible_files:
+    if os.path.exists(filename):
+        print(f"\n🔍 Found file: {filename}")
+        if reader_func:
+            products = reader_func(filename)
+            if products:
+                print(f"✅ Successfully loaded {len(products)} products from {filename}")
+                break
+        elif filename.endswith('.csv'):
+            # Fallback CSV reader with better encoding handling
+            print("📖 Attempting to read CSV with multiple encodings...")
+            for encoding in ['utf-8-sig', 'utf-8', 'latin1', 'cp1252']:
+                try:
+                    with open(filename, newline='', encoding=encoding) as csvfile:
+                        reader = csv.DictReader(csvfile)
+                        products = []
+                        for row_num, row in enumerate(reader, 1):
+                            # Try different possible column names for ASIN
+                            asin_value = None
+                            for possible_asin_key in ['asin', 'ASIN', 'uffeffasin']:
+                                if possible_asin_key in row:
+                                    asin_value = row[possible_asin_key]
+                                    break
+                            
+                            if asin_value:
+                                asin = str(asin_value).strip()
+                                if len(asin) == 10 and asin.isalnum():
+                                    products.append({
+                                        'asin': asin,
+                                        'title': row.get('title', ''),
+                                        'affiliate_link': row.get('affiliate_link', '')
+                                    })
+                                    print(f"  ✅ Row {row_num}: ASIN '{asin}' - Valid")
+                        
+                        if products:
+                            print(f"✅ Successfully read CSV with {encoding} encoding")
+                            break
+                except Exception as e:
+                    print(f"  ⚠️ Failed with {encoding} encoding: {e}")
+                    continue
 
 if not products:
-    print("❌ No valid products found")
+    print("\n❌ No valid products found in any supported file format!")
+    print("\n📝 Supported formats and examples:")
+    print("\n1. JSON format (products.json):")
+    print('''[
+  {
+    "asin": "B0C5HYBQMW",
+    "title": "BLUETTI Power Station",
+    "affiliate_link": "https://amzn.to/4ruXr7n"
+  },
+  {
+    "asin": "B0CL66FYLQ",
+    "title": "BLUETTI Solar Generator",
+    "affiliate_link": "https://amzn.to/3KeqtLE"
+  }
+]''')
+    print("\n2. Plain text format (products.txt):")
+    print('''# Lines starting with # are comments
+B0C5HYBQMW|BLUETTI Power Station|https://amzn.to/4ruXr7n
+B0CL66FYLQ|BLUETTI Solar Generator|https://amzn.to/3KeqtLE
+B0BVLPGS79|EF ECOFLOW Power|https://amzn.to/47D9dI1
+
+# Or just ASINs (one per line):
+B0C5HYBQMW
+B0CL66FYLQ''')
+    print("\n3. Excel format (products.xlsx):")
+    print("   Column A: asin")
+    print("   Column B: title")
+    print("   Column C: affiliate_link")
     exit(1)
 
-# Process products
+# Process products (rest of the code remains the same)
 results = []
 print(f"\n🚀 Starting to process {len(products)} products...")
 
