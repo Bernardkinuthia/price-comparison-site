@@ -1,105 +1,216 @@
-import csv, json, os, datetime
-from amazon_paapi import AmazonApi
+import csv, json, os, datetime, time
+import hashlib, hmac, base64
+from urllib.parse import quote, urlencode
+import requests
 
-# Amazon credentials from GitHub secrets (injected as env variables)
+# Amazon credentials from GitHub secrets
 access_key = os.getenv("AMAZON_ACCESS_KEY")
 secret_key = os.getenv("AMAZON_SECRET_KEY")
 associate_tag = os.getenv("AMAZON_ASSOCIATE_TAG")
 
-# Initialize Amazon API client
-amazon = AmazonApi(access_key, secret_key, associate_tag, "US")
+class AmazonPAAPI:
+    def __init__(self, access_key, secret_key, associate_tag, region="us-east-1"):
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.associate_tag = associate_tag
+        self.region = region
+        self.host = "webservices.amazon.com"
+        self.marketplace = "www.amazon.com"
+    
+    def _get_signature(self, string_to_sign):
+        """Generate AWS signature"""
+        signing_key = ("AWS4" + self.secret_key).encode('utf-8')
+        date_key = hmac.new(signing_key, datetime.datetime.utcnow().strftime('%Y%m%d').encode('utf-8'), hashlib.sha256).digest()
+        region_key = hmac.new(date_key, self.region.encode('utf-8'), hashlib.sha256).digest()
+        service_key = hmac.new(region_key, 'ProductAdvertisingAPI'.encode('utf-8'), hashlib.sha256).digest()
+        request_key = hmac.new(service_key, 'aws4_request'.encode('utf-8'), hashlib.sha256).digest()
+        signature = hmac.new(request_key, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+        return signature
+    
+    def get_items(self, asin_list):
+        """Get item information from Amazon PA-API"""
+        if isinstance(asin_list, str):
+            asin_list = [asin_list]
+        
+        # Request payload
+        payload = {
+            "ItemIds": asin_list,
+            "Resources": [
+                "ItemInfo.Title",
+                "Offers.Listings.Price"
+            ],
+            "PartnerTag": self.associate_tag,
+            "PartnerType": "Associates",
+            "Marketplace": self.marketplace
+        }
+        
+        # Headers
+        headers = {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Content-Encoding': 'amz-1.0',
+            'X-Amz-Target': 'com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems',
+            'Host': self.host
+        }
+        
+        # Current timestamp
+        timestamp = datetime.datetime.utcnow()
+        amz_date = timestamp.strftime('%Y%m%dT%H%M%SZ')
+        date_stamp = timestamp.strftime('%Y%m%d')
+        
+        # Create canonical request
+        canonical_headers = f"content-type:application/json; charset=utf-8\nhost:{self.host}\nx-amz-date:{amz_date}\nx-amz-target:com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems\n"
+        signed_headers = "content-type;host;x-amz-date;x-amz-target"
+        payload_json = json.dumps(payload, separators=(',', ':'))
+        payload_hash = hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
+        
+        canonical_request = f"POST\n/paapi5/getitems\n\n{canonical_headers}\n{signed_headers}\n{payload_hash}"
+        
+        # Create string to sign
+        credential_scope = f"{date_stamp}/{self.region}/ProductAdvertisingAPI/aws4_request"
+        string_to_sign = f"AWS4-HMAC-SHA256\n{amz_date}\n{credential_scope}\n{hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()}"
+        
+        # Create signature
+        signature = self._get_signature(string_to_sign)
+        
+        # Create authorization header
+        authorization_header = f"AWS4-HMAC-SHA256 Credential={self.access_key}/{credential_scope}, SignedHeaders={signed_headers}, Signature={signature}"
+        
+        # Add auth headers
+        headers['Authorization'] = authorization_header
+        headers['X-Amz-Date'] = amz_date
+        
+        # Make request
+        url = f"https://{self.host}/paapi5/getitems"
+        
+        try:
+            response = requests.post(url, headers=headers, data=payload_json, timeout=30)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"API Error {response.status_code}: {response.text}")
+                return None
+        except Exception as e:
+            print(f"Request error: {e}")
+            return None
 
-# Read products from CSV with better error handling
+# Initialize API client
+if not all([access_key, secret_key, associate_tag]):
+    print("❌ Missing Amazon API credentials")
+    exit(1)
+
+amazon_api = AmazonPAAPI(access_key, secret_key, associate_tag)
+
+# Read products from CSV
 products = []
 try:
+    print("📖 Reading products from CSV...")
+    with open("products.csv", newline="", encoding="utf-8") as csvfile:
+        content = csvfile.read()
+        print(f"🔍 File size: {len(content)} characters")
+    
+    # Reset file pointer and read with csv module
     with open("products.csv", newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
-        # Clean the fieldnames to remove any whitespace
-        if reader.fieldnames:
-            reader.fieldnames = [name.strip() if name else name for name in reader.fieldnames]
+        headers = reader.fieldnames
+        print(f"🔍 CSV Headers: {headers}")
         
+        if not headers:
+            raise Exception("No headers found in CSV file")
+        
+        # Clean headers
+        if headers:
+            reader.fieldnames = [name.strip() if name else name for name in headers]
+            print(f"🔍 Cleaned Headers: {reader.fieldnames}")
+        
+        row_count = 0
         for row in reader:
-            # Clean the row data as well
-            cleaned_row = {k.strip() if k else k: v.strip() if v else v for k, v in row.items()}
-            # Only add if ASIN exists and is not empty
-            if cleaned_row.get('asin') and cleaned_row['asin'].strip():
+            row_count += 1
+            # Clean row data
+            cleaned_row = {}
+            for k, v in row.items():
+                clean_key = k.strip() if k else k
+                clean_value = v.strip() if v else v
+                cleaned_row[clean_key] = clean_value
+            
+            # Check if ASIN exists and is valid
+            asin = cleaned_row.get('asin', '').strip()
+            if asin and len(asin) == 10:  # Amazon ASINs are 10 characters
                 products.append(cleaned_row)
-    print(f"✅ Successfully read {len(products)} products from CSV")
-    
-    # Debug: Print the first product to verify structure
-    if products:
-        print(f"🔍 CSV Headers: {list(products[0].keys())}")
-        print(f"🔍 First product ASIN: '{products[0].get('asin', 'MISSING')}'")
+                print(f"  ✅ Row {row_count}: ASIN '{asin}' - Valid")
+            else:
+                print(f"  ⚠️ Row {row_count}: ASIN '{asin}' - Invalid or missing")
         
+    print(f"✅ Successfully loaded {len(products)} valid products from {row_count} total rows")
+    
 except Exception as e:
     print(f"❌ Error reading CSV: {e}")
-    # Fallback to see what's actually in the file
+    # Try to read raw file for debugging
     try:
         with open("products.csv", "r", encoding="utf-8") as f:
-            lines = f.readlines()[:3]  # Read first 3 lines
-            print(f"🔍 Raw CSV content (first 3 lines):")
-            for i, line in enumerate(lines):
-                print(f"Line {i+1}: {repr(line)}")
-    except Exception as debug_error:
-        print(f"❌ Could not read file for debugging: {debug_error}")
+            lines = f.readlines()
+            print(f"🔍 First few lines of CSV:")
+            for i, line in enumerate(lines[:5]):
+                print(f"  Line {i+1}: {repr(line)}")
+    except:
+        pass
     exit(1)
 
 if not products:
-    print("❌ No valid products found in CSV")
+    print("❌ No valid products found")
     exit(1)
 
+# Process products
 results = []
+print(f"\n🚀 Starting to process {len(products)} products...")
 
-# Process products one by one with better error handling
 for i, product in enumerate(products, 1):
-    asin = product.get('asin', '').strip()
-    
-    if not asin:
-        print(f"⚠️ Product {i}: No ASIN found, skipping")
-        continue
-        
-    print(f"🔍 Processing product {i}/{len(products)}: ASIN '{asin}'")
+    asin = product['asin']
+    print(f"\n📦 Processing {i}/{len(products)}: {asin}")
     
     try:
-        # Make API call
-        response = amazon.get_items(asin)
+        # Call Amazon API
+        response = amazon_api.get_items([asin])
         
-        if not response or "ItemsResult" not in response:
-            raise Exception("Invalid API response structure")
-            
-        if "Items" not in response["ItemsResult"] or not response["ItemsResult"]["Items"]:
-            raise Exception("No items found in API response")
-            
-        item = response["ItemsResult"]["Items"][0]
+        if not response:
+            raise Exception("No response from Amazon API")
         
-        # Extract price with multiple fallback options
+        # Check for errors in response
+        if 'Errors' in response:
+            error_msg = response['Errors'][0].get('Message', 'Unknown API error')
+            raise Exception(f"API Error: {error_msg}")
+        
+        if 'ItemsResult' not in response or 'Items' not in response['ItemsResult']:
+            raise Exception("Invalid response structure")
+        
+        items = response['ItemsResult']['Items']
+        if not items:
+            raise Exception("No items returned")
+        
+        item = items[0]
+        
+        # Extract price
         price = "N/A"
-        price_sources = [
-            lambda: item["Offers"]["Listings"][0]["Price"]["DisplayAmount"],
-            lambda: item["Offers"]["Listings"][0]["Price"]["Amount"],
-            lambda: item["Offers"]["Summaries"][0]["LowestPrice"]["DisplayAmount"],
-            lambda: item["Offers"]["Summaries"][0]["LowestPrice"]["Amount"],
-            lambda: str(item["Offers"]["Listings"][0]["Price"]["Amount"]) if "Amount" in item["Offers"]["Listings"][0]["Price"] else None
-        ]
-        
-        for price_source in price_sources:
-            try:
-                extracted_price = price_source()
-                if extracted_price:
-                    price = extracted_price
-                    break
-            except (KeyError, IndexError, TypeError):
-                continue
-        
-        # Extract title (fallback to CSV title if API doesn't provide one)
-        title = product.get("title", "N/A")
         try:
-            api_title = item["ItemInfo"]["Title"]["DisplayValue"]
+            offers = item.get('Offers', {})
+            listings = offers.get('Listings', [])
+            if listings:
+                price_info = listings[0].get('Price', {})
+                price = price_info.get('DisplayAmount', price_info.get('Amount', 'N/A'))
+        except Exception as price_error:
+            print(f"  ⚠️ Price extraction failed: {price_error}")
+        
+        # Extract title
+        title = product.get('title', 'N/A')
+        try:
+            item_info = item.get('ItemInfo', {})
+            title_info = item_info.get('Title', {})
+            api_title = title_info.get('DisplayValue')
             if api_title:
                 title = api_title
-        except (KeyError, TypeError):
-            pass
+        except Exception as title_error:
+            print(f"  ⚠️ Title extraction failed: {title_error}")
         
+        # Create result
         result = {
             "asin": asin,
             "title": title,
@@ -109,50 +220,47 @@ for i, product in enumerate(products, 1):
         }
         
         results.append(result)
-        print(f"✅ Successfully processed {asin}: {price}")
+        print(f"  ✅ Success: Price = {price}")
         
-        # Small delay to avoid rate limiting
-        import time
-        time.sleep(0.5)
+        # Rate limiting - Amazon allows 1 request per second for free tier
+        time.sleep(1)
         
     except Exception as e:
         error_msg = str(e)
-        print(f"❌ Error processing ASIN '{asin}': {error_msg}")
+        print(f"  ❌ Failed: {error_msg}")
         
-        # Add error entry
-        results.append({
+        result = {
             "asin": asin,
             "title": product.get("title", "N/A"),
             "affiliate_link": product.get("affiliate_link", "N/A"),
             "price": "N/A",
             "error": error_msg,
             "last_updated": datetime.datetime.utcnow().isoformat()
-        })
+        }
+        results.append(result)
 
-# Save results to JSON
+# Save results
+print(f"\n💾 Saving results to prices.json...")
 try:
     with open("prices.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
-    print(f"✅ prices.json updated with {len(results)} products")
+    print("✅ File saved successfully")
 except Exception as e:
-    print(f"❌ Error writing JSON file: {e}")
+    print(f"❌ Error saving file: {e}")
 
-# Print summary
-successful_prices = sum(1 for r in results if r.get('price') != 'N/A' and 'error' not in r)
-failed_requests = sum(1 for r in results if 'error' in r)
+# Summary
+successful = sum(1 for r in results if r.get('price') != 'N/A' and 'error' not in r)
+failed = len(results) - successful
 
-print(f"📊 Summary:")
-print(f"  - Total products processed: {len(results)}")
-print(f"  - Successful price retrievals: {successful_prices}")
-print(f"  - Failed requests: {failed_requests}")
+print(f"\n📊 SUMMARY:")
+print(f"  Total processed: {len(results)}")
+print(f"  Successful: {successful}")
+print(f"  Failed: {failed}")
 
-if failed_requests > 0:
-    print(f"⚠️ Common failure reasons:")
-    error_types = {}
+if failed > 0:
+    print(f"\n❌ Failed items:")
     for r in results:
         if 'error' in r:
-            error = r['error'][:50] + "..." if len(r['error']) > 50 else r['error']
-            error_types[error] = error_types.get(error, 0) + 1
-    
-    for error, count in error_types.items():
-        print(f"  - {error}: {count} times")
+            print(f"  - {r['asin']}: {r['error']}")
+
+print(f"\n🎉 Process completed!")
