@@ -667,7 +667,7 @@ function createProductRow(product) {
     formatFuelType(product.fuel_type), // Fuel Type
     formatEngineType(product.engine_type), // Engine Type
     formatCondition(product.condition), // Condition
-    product.affiliate_url || 'N/A' // Changed from affiliate_link to affiliate_url
+    formatAffiliateLink(product) // Changed this line
 ];
     
 	cells.forEach((cellContent, index) => {
@@ -720,11 +720,26 @@ function createProductRow(product) {
             return condition.charAt(0).toUpperCase() + condition.slice(1);
         }
 
+// New function to format affiliate links
+function formatAffiliateLink(product) {
+    // If we have both link URL and display text
+    if (product.link && product.affiliate_url) {
+        const displayText = product.affiliate_url.trim();
+        return `<a href="${product.link}" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
+    }
+    
+    // If affiliate_url contains HTML (existing format - backward compatibility)
+    if (product.affiliate_url && product.affiliate_url.includes('<a href=')) {
+        return product.affiliate_url;
+    }
+    
+    // Fallback
+    return product.affiliate_url || 'N/A';
+}
+
 function extractBrandFromLink(affiliateUrl) {
     if (!affiliateUrl) return 'other_brand';
     
-    // Extract brand name from the beginning of the affiliate URL text
-    // Assumes format: "Brand Name Product Description <a href=..."
     const brandMap = {
         'honda': 'honda',
         'yamaha': 'yamaha', 
@@ -744,10 +759,11 @@ function extractBrandFromLink(affiliateUrl) {
         'pecron': 'pecron'
     };
     
-    const linkLower = affiliateUrl.toLowerCase();
+    // Check both the display text (affiliate_url) and any URL text
+    const textToCheck = affiliateUrl.toLowerCase();
     
     for (const [key, value] of Object.entries(brandMap)) {
-        if (linkLower.includes(key)) {
+        if (textToCheck.includes(key)) {
             return value;
         }
     }
