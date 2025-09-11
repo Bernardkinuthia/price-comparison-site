@@ -675,7 +675,7 @@ function createProductRow(product) {
     if (index === 7) { // Last column (affiliate link)
         td.className = 'name';
         // Use innerHTML for the affiliate link to render HTML properly
-        td.innerHTML = cellContent; // This should render the HTML links
+        td.innerHTML = cellContent && cellContent !== 'N/A' ? cellContent : 'No link available';
     } else {
         td.textContent = cellContent;
     }
