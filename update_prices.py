@@ -9,12 +9,30 @@ associate_tag = os.getenv("AMAZON_ASSOCIATE_TAG")
 # Initialize Amazon API client
 amazon = AmazonApi(access_key, secret_key, associate_tag, "US")
 
-# Read products from CSV
+# Read products from CSV with better error handling
 products = []
-with open("products.csv", newline="", encoding="utf-8") as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        products.append(row)
+try:
+    with open("products.csv", newline="", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            products.append(row)
+    print(f"✅ Successfully read {len(products)} products from CSV")
+except UnicodeDecodeError as e:
+    print(f"UTF-8 encoding failed: {e}")
+    # Try with error handling to skip problematic characters
+    with open("products.csv", newline="", encoding="utf-8", errors="replace") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            products.append(row)
+    print(f"✅ Read {len(products)} products with character replacement")
+except Exception as e:
+    print(f"Error reading CSV: {e}")
+    # Last resort - try latin-1 encoding
+    with open("products.csv", newline="", encoding="latin-1") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            products.append(row)
+    print(f"✅ Read {len(products)} products with latin-1 encoding")
 
 results = []
 for product in products:
