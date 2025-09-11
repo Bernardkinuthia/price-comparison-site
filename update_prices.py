@@ -118,7 +118,7 @@ def read_json_products(filename):
                         products.append({
                             'asin': asin,
                             'title': item.get('title', ''),
-                            'link': item.get('link', item.get('link', ''))  # Support both names
+                            'link': item.get('affiliate_url', item.get('link', ''))  # Support both names
                         })
                         print(f"  ✅ Product {i}: ASIN '{asin}' - Valid")
                     else:
@@ -212,7 +212,7 @@ def read_excel_products(filename):
                 title = str(title_cell.value or '').strip()
             
             if 'link' in headers:
-                link_cell = sheet.cell(row=row, column=headers['affiliate_url'])
+                link_cell = sheet.cell(row=row, column=headers['link'])
                 link = str(link_cell.value or '').strip()
             
             if asin and len(asin) == 10 and asin.isalnum():
@@ -392,7 +392,7 @@ for i, product in enumerate(products, 1):
         result = {
             "asin": asin,
             "title": product.get("title", "N/A"),
-            "affiliate_url": product.get("affiliate_url", "N/A"),  # Changed from affiliate_link
+            "link": product.get("link", "N/A"),  # Changed from affiliate_link
             "price": "N/A",
             "error": error_msg,
             "last_updated": datetime.datetime.utcnow().isoformat()
