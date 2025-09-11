@@ -481,6 +481,9 @@
                 const csvText = await response.text();
                 console.log('CSV loaded successfully');
                 
+				// Add these missing lines:
+				parseCSVData(csvText);
+				await populateTable();
                 
             } catch (error) {
                 console.error('Error loading CSV:', error);
@@ -573,8 +576,6 @@ async function populateTable() {
     // Apply initial filters
     apply_filters();
 	
-	parseCSVData(csvText);
-	populateTable();
 }
 
 async function updatePricesFromJSON() {
@@ -687,7 +688,8 @@ function createProductRow(product) {
     tr.className = 'generator';
     
     // Extract brand from affiliate_link for filtering
-    const brandFromLink = extractBrandFromLink(product.affiliate_url);
+    // Extract brand from the correct field (check your CSV structure)
+const brandFromLink = extractBrandFromLink(product.affiliate_url || product.link || '');
     
     // Set data attributes for filtering
     tr.setAttribute('data-product-key', product.product_key || '');
