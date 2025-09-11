@@ -118,7 +118,7 @@ def read_json_products(filename):
                         products.append({
                             'asin': asin,
                             'title': item.get('title', ''),
-                            'affiliate_url': item.get('affiliate_url', item.get('affiliate_link', ''))  # Support both names
+                            'affiliate_url': item.get('affiliate_url', item.get('link', ''))  # Support both names
                         })
                         print(f"  ✅ Product {i}: ASIN '{asin}' - Valid")
                     else:
