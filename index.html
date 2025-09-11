@@ -599,15 +599,14 @@ async function updatePricesFromJSON() {
 function updateProductPrices(priceData) {
     productsData.forEach(product => {
         // Try to match by affiliate_link URL
-        const productLink = product.affiliate_link;
-        
-        if (productLink) {
-            // Find matching price entry by comparing affiliate links
-            const matchingPriceEntry = priceData.find(priceItem => {
-                return priceItem.affiliate_link === productLink || 
-                       (priceItem.title && product.affiliate_link && 
-                        priceItem.title.toLowerCase().includes(extractProductNameFromLink(product.affiliate_link).toLowerCase()));
-            });
+		const productLink = product.affiliate_url;
+
+if (productLink) {
+    const matchingPriceEntry = priceData.find(priceItem => {
+        return priceItem.affiliate_url === productLink || 
+               (priceItem.title && product.affiliate_url && 
+                priceItem.title.toLowerCase().includes(extractProductNameFromLink(product.affiliate_url).toLowerCase()));
+    });
             
             if (matchingPriceEntry && matchingPriceEntry.price !== "N/A") {
                 product.price = matchingPriceEntry.price;
@@ -647,7 +646,7 @@ function createProductRow(product) {
     tr.className = 'generator';
     
     // Extract brand from affiliate_link for filtering
-    const brandFromLink = extractBrandFromLink(product.affiliate_link);
+    const brandFromLink = extractBrandFromLink(product.affiliate_url);
     
     // Set data attributes for filtering
     tr.setAttribute('data-product-key', product.product_key || '');
@@ -676,7 +675,7 @@ function createProductRow(product) {
     if (index === 7) { // Last column (affiliate link)
         td.className = 'name';
         // Use innerHTML for the affiliate link to render HTML properly
-        td.innerHTML = cellContent && cellContent !== 'N/A' ? cellContent : 'No link available';
+        td.innerHTML = cellContent; // This should render the HTML links
     } else {
         td.textContent = cellContent;
     }
@@ -721,10 +720,10 @@ function createProductRow(product) {
             return condition.charAt(0).toUpperCase() + condition.slice(1);
         }
 
-function extractBrandFromLink(affiliateLink) {
-    if (!affiliateLink) return 'other_brand';
+function extractBrandFromLink(product.affiliate_url) {
+    if (!product.affiliate_url) return 'other_brand';
     
-    // Extract brand name from the beginning of the affiliate link text
+    // Extract brand name from the beginning of the product.affiliate_url text
     // Assumes format: "Brand Name Product Description <a href=..."
     const brandMap = {
         'honda': 'honda',
@@ -745,7 +744,7 @@ function extractBrandFromLink(affiliateLink) {
         'pecron': 'pecron'
     };
     
-    const linkLower = affiliateLink.toLowerCase();
+    const linkLower = product.affiliate_url.toLowerCase();
     
     for (const [key, value] of Object.entries(brandMap)) {
         if (linkLower.includes(key)) {
