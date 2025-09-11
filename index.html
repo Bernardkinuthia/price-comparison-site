@@ -510,6 +510,8 @@
             }
             
             console.log(`Parsed ${productsData.length} products from CSV`);
+			console.log(`Parsed ${productsData.length} products from CSV`);
+debugCSVStructure(); // Add this line here instead
         }
 		
 		function debugCSVStructure() {
@@ -575,7 +577,6 @@ async function populateTable() {
     apply_filters();
 	
 	parseCSVData(csvText);
-	debugCSVStructure(); // Add this line
 	populateTable();
 }
 async function updatePricesFromJSON() {
