@@ -615,9 +615,10 @@ function updateProductPrices(priceData) {
     let updatedCount = 0;
     
     productsData.forEach((product, index) => {
-        // Match CSV 'link' field with JSON 'affiliate_url' field
+        // Match CSV 'link' field with JSON 'affiliate_link' field
         const matchingPriceEntry = priceData.find(priceItem => 
-            priceItem.affiliate_url === product.link
+            priceItem.link === product.link || // Try affiliate_link first
+            priceItem.link === product.link              // Fallback to link
         );
         
         if (matchingPriceEntry) {
