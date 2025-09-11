@@ -118,7 +118,7 @@ def read_json_products(filename):
                         products.append({
                             'asin': asin,
                             'title': item.get('title', ''),
-                            'affiliate_link': item.get('affiliate_link', '')
+                            'affiliate_url': item.get('affiliate_url', item.get('affiliate_link', ''))  # Support both names
                         })
                         print(f"  ✅ Product {i}: ASIN '{asin}' - Valid")
                     else:
@@ -150,13 +150,13 @@ def read_txt_products(filename):
             
             asin = parts[0].strip()
             title = parts[1].strip() if len(parts) > 1 else ''
-            affiliate_link = parts[2].strip() if len(parts) > 2 else ''
+            affiliate_url = parts[2].strip() if len(parts) > 2 else ''
             
             if asin and len(asin) == 10 and asin.isalnum():
                 products.append({
                     'asin': asin,
                     'title': title,
-                    'affiliate_link': affiliate_link
+                    'affiliate_url': affiliate_url
                 })
                 print(f"  ✅ Line {i}: ASIN '{asin}' - Valid")
             else:
@@ -189,7 +189,7 @@ def read_excel_products(filename):
                 elif 'title' in header_name or 'name' in header_name:
                     headers['title'] = col
                 elif 'link' in header_name or 'url' in header_name:
-                    headers['affiliate_link'] = col
+                    headers['affiliate_url'] = col
         
         print(f"🔍 Found headers: {headers}")
         
@@ -205,21 +205,21 @@ def read_excel_products(filename):
             
             asin = str(asin_cell.value).strip()
             title = ''
-            affiliate_link = ''
+            affiliate_url = ''
             
             if 'title' in headers:
                 title_cell = sheet.cell(row=row, column=headers['title'])
                 title = str(title_cell.value or '').strip()
             
-            if 'affiliate_link' in headers:
-                link_cell = sheet.cell(row=row, column=headers['affiliate_link'])
-                affiliate_link = str(link_cell.value or '').strip()
+            if 'affiliate_url' in headers:
+                link_cell = sheet.cell(row=row, column=headers['affiliate_url'])
+                affiliate_url = str(link_cell.value or '').strip()
             
             if asin and len(asin) == 10 and asin.isalnum():
                 products.append({
                     'asin': asin,
                     'title': title,
-                    'affiliate_link': affiliate_link
+                    'affiliate_url': affiliate_url
                 })
                 print(f"  ✅ Row {row}: ASIN '{asin}' - Valid")
             else:
@@ -277,7 +277,7 @@ for filename, reader_func in possible_files:
                                     products.append({
                                         'asin': asin,
                                         'title': row.get('title', ''),
-                                        'affiliate_link': row.get('affiliate_link', '')
+                                        'affiliate_url': row.get('affiliate_url', row.get('affiliate_link', ''))  # Support both names
                                     })
                                     print(f"  ✅ Row {row_num}: ASIN '{asin}' - Valid")
                         
@@ -296,12 +296,12 @@ if not products:
   {
     "asin": "B0C5HYBQMW",
     "title": "BLUETTI Power Station",
-    "affiliate_link": "https://amzn.to/4ruXr7n"
+    "affiliate_url": "https://amzn.to/4ruXr7n"
   },
   {
     "asin": "B0CL66FYLQ",
     "title": "BLUETTI Solar Generator",
-    "affiliate_link": "https://amzn.to/3KeqtLE"
+    "affiliate_url": "https://amzn.to/3KeqtLE"
   }
 ]''')
     print("\n2. Plain text format (products.txt):")
@@ -316,7 +316,7 @@ B0CL66FYLQ''')
     print("\n3. Excel format (products.xlsx):")
     print("   Column A: asin")
     print("   Column B: title")
-    print("   Column C: affiliate_link")
+    print("   Column C: affiliate_url")
     exit(1)
 
 # Process products (rest of the code remains the same)
@@ -370,11 +370,11 @@ for i, product in enumerate(products, 1):
         except Exception as title_error:
             print(f"  ⚠️ Title extraction failed: {title_error}")
         
-        # Create result
+        # Create result - CHANGED affiliate_link to affiliate_url
         result = {
             "asin": asin,
             "title": title,
-            "affiliate_link": product.get("affiliate_link", "N/A"),
+            "affiliate_url": product.get("affiliate_url", "N/A"),  # Changed from affiliate_link
             "price": price,
             "last_updated": datetime.datetime.utcnow().isoformat()
         }
@@ -392,7 +392,7 @@ for i, product in enumerate(products, 1):
         result = {
             "asin": asin,
             "title": product.get("title", "N/A"),
-            "affiliate_link": product.get("affiliate_link", "N/A"),
+            "affiliate_url": product.get("affiliate_url", "N/A"),  # Changed from affiliate_link
             "price": "N/A",
             "error": error_msg,
             "last_updated": datetime.datetime.utcnow().isoformat()
