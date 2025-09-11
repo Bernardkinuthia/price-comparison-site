@@ -1,5 +1,9 @@
 import csv, json, os, datetime
-from amazon_paapi import AmazonApi
+from paapi5_python_sdk.api.default_api import DefaultApi
+from paapi5_python_sdk.configuration import Configuration
+from paapi5_python_sdk.models.get_items_request import GetItemsRequest
+from paapi5_python_sdk.models.partner_type import PartnerType
+from paapi5_python_sdk.rest import ApiException
 
 # Amazon credentials from GitHub secrets (injected as env variables)
 access_key = os.getenv("AMAZON_ACCESS_KEY")
