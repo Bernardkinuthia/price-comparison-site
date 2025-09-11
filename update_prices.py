@@ -118,7 +118,7 @@ def read_json_products(filename):
                         products.append({
                             'asin': asin,
                             'title': item.get('title', ''),
-                            'affiliate_url': item.get('affiliate_url', item.get('link', ''))  # Support both names
+                            'link': item.get('link', item.get('link', ''))  # Support both names
                         })
                         print(f"  ✅ Product {i}: ASIN '{asin}' - Valid")
                     else:
@@ -156,7 +156,7 @@ def read_txt_products(filename):
                 products.append({
                     'asin': asin,
                     'title': title,
-                    'affiliate_url': affiliate_url
+                    'link': affiliate_url
                 })
                 print(f"  ✅ Line {i}: ASIN '{asin}' - Valid")
             else:
@@ -189,7 +189,7 @@ def read_excel_products(filename):
                 elif 'title' in header_name or 'name' in header_name:
                     headers['title'] = col
                 elif 'link' in header_name or 'url' in header_name:
-                    headers['affiliate_url'] = col
+                    headers['link'] = col
         
         print(f"🔍 Found headers: {headers}")
         
@@ -205,21 +205,21 @@ def read_excel_products(filename):
             
             asin = str(asin_cell.value).strip()
             title = ''
-            affiliate_url = ''
+            link = ''
             
             if 'title' in headers:
                 title_cell = sheet.cell(row=row, column=headers['title'])
                 title = str(title_cell.value or '').strip()
             
-            if 'affiliate_url' in headers:
+            if 'link' in headers:
                 link_cell = sheet.cell(row=row, column=headers['affiliate_url'])
-                affiliate_url = str(link_cell.value or '').strip()
+                link = str(link_cell.value or '').strip()
             
             if asin and len(asin) == 10 and asin.isalnum():
                 products.append({
                     'asin': asin,
                     'title': title,
-                    'affiliate_url': affiliate_url
+                    'link': link
                 })
                 print(f"  ✅ Row {row}: ASIN '{asin}' - Valid")
             else:
@@ -277,7 +277,7 @@ for filename, reader_func in possible_files:
                                     products.append({
                                         'asin': asin,
                                         'title': row.get('title', ''),
-                                        'affiliate_url': row.get('affiliate_url', row.get('affiliate_link', ''))  # Support both names
+                                        'link': row.get('affiliate_url', row.get('affiliate_link', ''))  # Support both names
                                     })
                                     print(f"  ✅ Row {row_num}: ASIN '{asin}' - Valid")
                         
@@ -374,7 +374,7 @@ for i, product in enumerate(products, 1):
         result = {
             "asin": asin,
             "title": title,
-            "affiliate_url": product.get("affiliate_url", "N/A"),  # Changed from affiliate_link
+            "link": product.get("link", "N/A"),  # Changed from affiliate_link
             "price": price,
             "last_updated": datetime.datetime.utcnow().isoformat()
         }
