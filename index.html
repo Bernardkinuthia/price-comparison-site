@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Generator Prices</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Comparison of generators on Amazon, sorted by price per watt">
+    
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 10pt;
+            margin: 0;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            line-height: 1.5em;
+        }
+
+        table, td, tr, th {
+            border: 0;
+        }
+
+        th {
+            text-align: left;
+            padding-right: 3em;
+        }
+
+        tr {
+            line-height: 1.2em;
+        }
+
+        td {
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        td.name {
+            white-space: normal;
+        }
+
+        th {
+            padding-right: 0.75em;
+        }
+
+        fieldset {
+            width: 10em;
+            margin: 0;
+            margin-bottom: 0.5em;
+            border: 1px solid black;
+        }
+
+        label {
+            display: block;
+        }
+
+        #filters {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 12em;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 0.5em;
+            background-color: #f9f9f9;
+            border-right: 1px solid #ddd;
+        }
+
+        #filters .capacity label {
+            display: inline-block;
+            width: 4em;
+        }
+
+        #filters .capacity input {
+            display: inline-block;
+            width: 3.5em;
+        }
+
+        legend {
+            font-weight: bold;
+            padding-left: 0;
+        }
+
+        td input {
+            width: 3em;
+        }
+
+        td select {
+            width: 10em;
+        }
+
+        #powerprices {
+            padding: 0.5em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .active {
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+        }
+
+        #disclosures {
+            margin: 1em;
+        }
+
+        #notices .new {
+            color: #ffa400;
+            font-weight: bold;
+        }
+
+        #beta {
+            width: 100%;
+            background-color: #0064af;
+            color: #fff;
+            font-weight: bold;
+            padding: 0.5em;
+        }
+
+        #main-content {
+            margin-left: 13em;
+            padding: 0.5em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            vertical-align: middle;
+            line-height: 1.3;
+        }
+
+        th:nth-child(2), td:nth-child(2) {
+            width: 70px;
+            min-width: 70px;
+        }
+
+        th:nth-child(3), td:nth-child(3) {
+            width: 50px;
+            min-width: 50px;
+        }
+
+        th:nth-child(4), td:nth-child(4) {
+            width: 50px;
+            min-width: 50px;
+        }
+
+        th:nth-child(8), td:nth-child(8) {
+            width: 650px;
+            min-width: 600px;
+        }
+
+        .filtered-out {
+            display: none;
+        }
+
+        #links a {
+            color: #0066cc;
+            text-decoration: none;
+            display: block;
+            padding: 4px 0;
+        }
+
+        #links a:hover {
+            color: #004499;
+            text-decoration: underline;
+        }
+
+        #links li {
+            margin-bottom: 8px;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+		/* Responsive Design */
+@media screen and (max-width: 768px) {
+    #filters {
+        position: relative;
+        width: 100%;
+        height: auto;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    #affiliate-disclosure {
+        margin-left: 10px;
+    }
+    
+    #main-content {
+        margin-left: 0;
+        padding: 10px;
+    }
+    
+    /* Make table horizontally scrollable on mobile */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 800px;
+        font-size: 12px;
+    }
+    
+    th, td {
+        padding: 6px 4px;
+        white-space: nowrap;
+    }
+    
+    /* Adjust column widths for mobile */
+    th:nth-child(8), td:nth-child(8) {
+        width: 300px;
+        min-width: 250px;
+        white-space: normal;
+    }
+    
+    /* Stack filter fieldsets horizontally on mobile */
+    #filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    #filters fieldset {
+        width: auto;
+        min-width: 150px;
+        flex: 1;
+    }
+    
+    #filters fieldset.last {
+        width: 100%;
+        flex-basis: 100%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    body {
+        font-size: 9pt;
+    }
+    
+    table {
+        font-size: 10px;
+    }
+    
+    th, td {
+        padding: 4px 2px;
+    }
+    
+    #filters fieldset {
+        min-width: 120px;
+    }
+    
+    th:nth-child(8), td:nth-child(8) {
+        width: 200px;
+        min-width: 180px;
+    }
+}
+    </style>
+</head>
+<body>
+<div id="affiliate-disclosure" style="
+    background-color: #fff3cd; 
+    border: 1px solid #ffeaa7; 
+    padding: 10px 15px; 
+    margin-left: 14em; 
+    margin-right: 10px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px; 
+    font-size: 13px;
+    line-height: 1.4;
+    position: relative;
+    z-index: 10;
+">
+    <strong>⚠️ Affiliate Disclosure:</strong> This website contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no additional cost to you. This means if you click on a link and make a purchase, I may receive a small commission. All prices and product information are accurate as of the last update and subject to change. I only recommend products I believe will be valuable to you.
+</div>
+    
+    <div id="filters">
+        <fieldset class="condition">
+            <legend>Condition</legend>
+            <label><input type="checkbox" data-condition="new" checked="">New</label>
+            <label><input type="checkbox" data-condition="used" checked="">Used</label>
+        </fieldset>
+        
+        <fieldset class="wattage">
+            <legend>Output Wattage</legend>
+            <input type="number" id="wattage_min" size="2" min="0" placeholder="W">
+            <label for="wattage_min">Minimum</label>
+            <input type="number" id="wattage_max" size="2" min="0" placeholder="W">
+            <label for="wattage_max">Maximum</label>
+        </fieldset>
+        
+        <fieldset class="capacity">
+            <legend>Battery Capacity (Wh)</legend>
+            <input type="number" id="capacity_min" size="2" min="0" placeholder="Wh">
+            <label for="capacity_min">Minimum</label>
+            <input type="number" id="capacity_max" size="2" min="0" placeholder="Wh">
+            <label for="capacity_max">Maximum</label>
+        </fieldset>
+        
+        <fieldset class="category">
+            <legend>
+                <label><input type="checkbox" data-category="generator" checked="">Generators</label>
+            </legend>
+            
+            <div class="product_type">
+                <label><input type="checkbox" class="filter" data-category="generator" data-product-type="small_wattage" checked="">Small (0-500W)</label>
+            </div>
+            
+            <div class="product_type">
+                <label><input type="checkbox" class="filter" data-category="generator" data-product-type="medium_wattage" checked="">Medium (501-1500W)</label>
+            </div>
+            
+            <div class="product_type">
+                <label><input type="checkbox" class="filter" data-category="generator" data-product-type="large_wattage" checked="">Large (1501W+)</label>
+            </div>
+        </fieldset>
+        
+        <fieldset class="fuel_type">
+            <legend>Fuel Type</legend>
+            <label><input type="checkbox" data-fuel-type="gasoline" checked="">Gasoline</label>
+            <label><input type="checkbox" data-fuel-type="diesel" checked="">Diesel</label>
+            <label><input type="checkbox" data-fuel-type="propane" checked="">Propane</label>
+            <label><input type="checkbox" data-fuel-type="dual_fuel" checked="">Dual Fuel</label>
+            <label><input type="checkbox" data-fuel-type="tri_fuel" checked="">Tri Fuel</label>
+            <label><input type="checkbox" data-fuel-type="solar" checked="">Solar</label>
+            <label><input type="checkbox" data-fuel-type="battery" checked="">Battery</label>
+        </fieldset>
+        
+        <fieldset class="engine_type">
+            <legend>Engine Type</legend>
+            <label><input type="checkbox" data-engine-type="2_stroke" checked="">2 Stroke</label>
+            <label><input type="checkbox" data-engine-type="4_stroke" checked="">4 Stroke</label>
+            <label><input type="checkbox" data-engine-type="electric" checked="">Electric</label>
+        </fieldset>
+        
+        <fieldset class="brand">
+            <legend>Popular Brands</legend>
+            <label><input type="checkbox" data-brand="honda" checked="">Honda</label>
+            <label><input type="checkbox" data-brand="yamaha" checked="">Yamaha</label>
+            <label><input type="checkbox" data-brand="generac" checked="">Generac</label>
+            <label><input type="checkbox" data-brand="champion" checked="">Champion</label>
+            <label><input type="checkbox" data-brand="westinghouse" checked="">Westinghouse</label>
+            <label><input type="checkbox" data-brand="zerokor" checked="">ZeroKor</label>
+            <label><input type="checkbox" data-brand="ef_ecoflow" checked="">EF Ecoflow</label>
+            <label><input type="checkbox" data-brand="bulleti" checked="">Bulleti</label>
+            <label><input type="checkbox" data-brand="jackery" checked="">Jackery</label>
+            <label><input type="checkbox" data-brand="anker" checked="">Anker</label>
+            <label><input type="checkbox" data-brand="marbero" checked="">MARBERO</label>
+            <label><input type="checkbox" data-brand="oupes" checked="">OUPES</label>
+            <label><input type="checkbox" data-brand="grecell" checked="">GRECELL</label>
+            <label><input type="checkbox" data-brand="allwei" checked="">ALLWEI</label>
+            <label><input type="checkbox" data-brand="allpowers" checked="">ALLPOWERS</label>
+            <label><input type="checkbox" data-brand="pecron" checked="">Pecron</label>
+            <label><input type="checkbox" data-brand="other_brand" checked="">Other Brands</label>
+        </fieldset>
+        
+        <fieldset id="links">
+            <legend>Site Pages</legend>
+            <ul>
+                <li><a href="/faq.html">FAQ</a></li>
+                <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                <li><a href="/terms-of-use.html">Terms of Use</a></li>
+                <li><a href="/amazon-affiliate-disclosure.html">Amazon Affiliate Disclosure</a></li>
+                <li><a href="/contact.html">Contact Us</a></li>
+                <li><a href="/about.html">About Us</a></li>
+            </ul>
+        </fieldset>
+        
+        <fieldset class="last">
+            This site is supported by paid affiliate links. <a href="/faq.html#disclosures">Learn more</a>
+        </fieldset>
+    </div>
+
+    <div id="main-content">
+        <div id="loading">Loading products...</div>
+        
+    <div class="table-wrapper">
+		<table id="Generator Prices" style="display: none;">
+            <thead>
+                <tr id="powerprices-head">
+                    <th>Price</th>
+                    <th>Price&nbsp;/<br>&nbsp;Watt</th>
+                    <th>Output<br>Wattage<br>(W)</th>
+                    <th>Battery<br>Capacity<br>(Wh)</th>
+                    <th>Fuel&nbsp;<br>Type</th>
+                    <th>Engine&nbsp;<br>Type</th>
+                    <th>Condition</th>
+                    <th>Affiliate Link</th>
+                </tr>
+            </thead>
+            <tbody id="powerprices-body" lang="en">
+                <!-- Table rows will be populated from CSV -->
+            </tbody>
+        </table>
+	</div>
+
+        <div style="margin-top: 30px;">
+            <p id="detailed-disclosures" style="
+                font-size: 12px; 
+                color: #666; 
+                padding: 20px; 
+                background-color: #f8f9fa; 
+                border-radius: 5px;
+                line-height: 1.5;
+                margin-bottom: 20px;
+            ">
+                <strong>Important Disclosures:</strong><br><br>
+                
+                <strong>Amazon Associate:</strong> This site is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com.<br><br>
+                
+                <strong>Pricing Information:</strong> All product prices and availability are automatically updated from Amazon's Product Advertising API and are accurate as of the last update. Prices and availability are subject to change without notice. Any price displayed on Amazon at the time of purchase will govern the sale.<br><br>
+                
+                <strong>Commission Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases. When you purchase through our affiliate links, we may earn a commission at no additional cost to you. This helps support our website and allows us to continue providing price comparisons.<br><br>
+                
+                <strong>Data Accuracy:</strong> While we strive to provide accurate and up-to-date information, we make no warranties about the completeness, reliability, or accuracy of this information. Product specifications, pricing, and availability can change rapidly.<br><br>
+                
+                <strong>Independent Research:</strong> We encourage you to verify all product information, read reviews, and compare prices before making any purchase decisions. This comparison tool is meant to assist your research, not replace it.
+            </p>
+            
+            <p id="last-updated-info" style="
+                font-size: 11px; 
+                color: #888; 
+                text-align: center; 
+                padding: 10px;
+                border-top: 1px solid #ddd;
+                margin-bottom: 20px;
+            ">
+                <!-- Will be populated by JavaScript -->
+            </p>
+            
+            <div style="text-align: center; padding: 15px; border-top: 1px solid #eee;">
+                <a href="/faq.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">FAQ</a> | 
+                <a href="/privacy-policy.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Privacy Policy</a> | 
+                <a href="/terms-of-use.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Terms of Use</a> | 
+                <a href="/amazon-affiliate-disclosure.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Amazon Affiliate Disclosure</a> | 
+                <a href="/contact.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Contact Us</a> | 
+                <a href="/about.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">About Us</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var page_locale = 'us';
+        var default_filters = {};
+        var f = document.getElementById('filters');
+        var productsData = [];
+
+        // CSV loading and parsing functions
+        async function loadProductsFromCSV() {
+            try {
+                // Load CSV from GitHub raw file
+                const response = await fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/product_names.csv');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                console.log('CSV loaded successfully');
+                
+                parseCSVData(csvText);
+                populateTable();
+                
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                document.getElementById('loading').textContent = 'Error loading product data. Please refresh the page.';
+            }
+        }
+
+        function parseCSVData(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            
+            productsData = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = parseCSVLine(lines[i]);
+                const product = {};
+                
+                headers.forEach((header, index) => {
+                    product[header] = values[index] ? values[index].trim().replace(/^"|"$/g, '') : '';
+                });
+                
+                productsData.push(product);
+            }
+            
+            console.log(`Parsed ${productsData.length} products from CSV`);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+
+async function populateTable() {
+    const tbody = document.getElementById('powerprices-body');
+    const table = document.getElementById('Generator Prices');
+    const loading = document.getElementById('loading');
+    
+    if (!tbody || productsData.length === 0) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // Generate table rows from CSV data
+    productsData.forEach(product => {
+        const row = createProductRow(product);
+        tbody.appendChild(row);
+    });
+    
+    // Show table and hide loading
+    table.style.display = 'table';
+    loading.style.display = 'none';
+    
+    // Update prices from JSON after table is created
+    await updatePricesFromJSON();
+    
+    // Calculate price per watt (will use updated prices)
+    calculatePricePerWatt();
+    
+    // Update stats
+    updateLastUpdatedInfo();
+    
+    // Apply initial filters
+    apply_filters();
+}
+async function updatePricesFromJSON() {
+    try {
+        // Load JSON from GitHub raw file (adjust URL to match your repo)
+        const response = await fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/prices.json');
+        
+        if (!response.ok) {
+            console.warn(`JSON price update failed: ${response.status}`);
+            return; // Don't throw error, just continue without price updates
+        }
+        
+        const priceData = await response.json();
+        console.log('Price updates loaded successfully');
+        
+        // Update prices in the productsData array
+        updateProductPrices(priceData);
+        
+        // Refresh the table with new prices
+        refreshTablePrices();
+        
+        // Recalculate price per watt with new prices
+        calculatePricePerWatt();
+        
+        console.log('Prices updated successfully');
+        
+    } catch (error) {
+        console.warn('Error loading price updates (continuing with CSV prices):', error);
+        // Continue silently - site will work with CSV prices
+    }
+}
+
+function updateProductPrices(priceData) {
+    productsData.forEach(product => {
+        // Try to match by affiliate_link URL
+        const productLink = product.affiliate_link;
+        
+        if (productLink) {
+            // Find matching price entry by comparing affiliate links
+            const matchingPriceEntry = priceData.find(priceItem => {
+                return priceItem.affiliate_link === productLink || 
+                       (priceItem.title && product.affiliate_link && 
+                        priceItem.title.toLowerCase().includes(extractProductNameFromLink(product.affiliate_link).toLowerCase()));
+            });
+            
+            if (matchingPriceEntry && matchingPriceEntry.price !== "N/A") {
+                product.price = matchingPriceEntry.price;
+                product.last_updated = matchingPriceEntry.last_updated;
+            }
+        }
+    });
+}
+
+function extractProductNameFromLink(affiliateLink) {
+    if (!affiliateLink) return '';
+    
+    // Extract text before the first <a> tag if it's an HTML link
+    const match = affiliateLink.match(/^([^<]+)/);
+    return match ? match[1].trim() : affiliateLink;
+}
+
+function refreshTablePrices() {
+    const rows = document.querySelectorAll('#powerprices-body .generator');
+    
+    rows.forEach((row, index) => {
+        if (index < productsData.length) {
+            const product = productsData[index];
+            
+            // Update price cell (first column)
+            const priceCell = row.children[0];
+            priceCell.textContent = formatPrice(product.price);
+            
+            // Optionally update row attributes for filtering
+            row.setAttribute('data-price', product.price || '0');
+        }
+    });
+}
+
+function createProductRow(product) {
+    const tr = document.createElement('tr');
+    tr.className = 'generator';
+    
+    // Extract brand from affiliate_link for filtering
+    const brandFromLink = extractBrandFromLink(product.affiliate_link);
+    
+    // Set data attributes for filtering
+    tr.setAttribute('data-product-key', product.product_key || '');
+    tr.setAttribute('data-product-type', determineProductType(product.output_wattage));
+    tr.setAttribute('data-condition', (product.condition || 'new').toLowerCase());
+    tr.setAttribute('data-capacity', product.battery_capacity || '0');
+    tr.setAttribute('data-wattage', product.output_wattage || '0');
+    tr.setAttribute('data-fuel-type', (product.fuel_type || 'gasoline').toLowerCase().replace(' ', '_'));
+    tr.setAttribute('data-engine-type', (product.engine_type || 'electric').toLowerCase().replace(' ', '_'));
+    tr.setAttribute('data-brand', brandFromLink);
+    
+    // Create table cells
+    const cells = [
+        formatPrice(product.price), // Price
+        '', // Price per Watt (calculated by JS)
+        product.output_wattage || '0', // Output Wattage
+        formatCapacity(product.battery_capacity), // Battery Capacity
+        formatFuelType(product.fuel_type), // Fuel Type
+        formatEngineType(product.engine_type), // Engine Type
+        formatCondition(product.condition), // Condition
+        product.affiliate_link || 'N/A' // Affiliate Link with product name
+    ];
+    
+    cells.forEach((cellContent, index) => {
+        const td = document.createElement('td');
+        if (index === 7) { // Last column (affiliate link)
+            td.className = 'name';
+            td.innerHTML = cellContent;
+        } else {
+            td.textContent = cellContent;
+        }
+        tr.appendChild(td);
+    });
+    
+    return tr;
+}
+
+        // Helper functions
+        function determineProductType(wattage) {
+            const watts = parseInt(wattage) || 0;
+            if (watts <= 500) return 'small_wattage';
+            if (watts <= 1500) return 'medium_wattage';
+            return 'large_wattage';
+        }
+
+        function formatPrice(price) {
+            if (!price || price === '0' || price === '') return '';
+            const numPrice = parseFloat(price);
+            if (isNaN(numPrice)) return '';
+            return '$' + numPrice.toFixed(2);
+        }
+
+        function formatCapacity(capacity) {
+            if (!capacity || capacity === '0') return '';
+            return capacity.toString().includes('Wh') ? capacity : capacity + 'Wh';
+        }
+
+        function formatFuelType(fuelType) {
+            if (!fuelType) return 'N/A';
+            return fuelType.charAt(0).toUpperCase() + fuelType.slice(1);
+        }
+
+        function formatEngineType(engineType) {
+            if (!engineType) return 'N/A';
+            return engineType.charAt(0).toUpperCase() + engineType.slice(1);
+        }
+
+        function formatCondition(condition) {
+            if (!condition) return 'New';
+            return condition.charAt(0).toUpperCase() + condition.slice(1);
+        }
+
+function extractBrandFromLink(affiliateLink) {
+    if (!affiliateLink) return 'other_brand';
+    
+    // Extract brand name from the beginning of the affiliate link text
+    // Assumes format: "Brand Name Product Description <a href=..."
+    const brandMap = {
+        'honda': 'honda',
+        'yamaha': 'yamaha', 
+        'generac': 'generac',
+        'champion': 'champion',
+        'westinghouse': 'westinghouse',
+        'zerokor': 'zerokor',
+        'ecoflow': 'ef_ecoflow',
+        'bulleti': 'bulleti',
+        'jackery': 'jackery',
+        'anker': 'anker',
+        'marbero': 'marbero',
+        'oupes': 'oupes',
+        'grecell': 'grecell',
+        'allwei': 'allwei',
+        'allpowers': 'allpowers',
+        'pecron': 'pecron'
+    };
+    
+    const linkLower = affiliateLink.toLowerCase();
+    
+    for (const [key, value] of Object.entries(brandMap)) {
+        if (linkLower.includes(key)) {
+            return value;
+        }
+    }
+    
+    return 'other_brand';
+}
+
+        function calculatePricePerWatt() {
+            const rows = document.querySelectorAll('#powerprices-body .generator');
+            
+            rows.forEach(row => {
+                const priceCell = row.children[0];
+                const pricePerWattCell = row.children[1];
+                const wattageCell = row.children[2];
+                
+                const priceText = priceCell.textContent.trim();
+                const price = parseFloat(priceText.replace(/[$,]/g, ''));
+                
+                const wattageText = wattageCell.textContent.trim();
+                const wattage = parseFloat(wattageText);
+                
+                if (wattage > 0 && !isNaN(price)) {
+                    const pricePerWatt = (price / wattage).toFixed(2);
+                    pricePerWattCell.textContent = '$' + pricePerWatt;
+                } else {
+                    pricePerWattCell.textContent = 'N/A';
+                }
+            });
+        }
+
+        function updateLastUpdatedInfo() {
+            const lastUpdatedElement = document.getElementById('last-updated-info');
+            const now = new Date();
+            const availableCount = productsData.filter(p => p.price && parseFloat(p.price) > 0).length;
+            
+            lastUpdatedElement.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} | Showing ${productsData.length} products (${availableCount} with current prices)`;
+        }
+
+        // Filter functions (existing code)
+        function get_filters() {
+            var filters = {
+                category: {},
+                condition: {},
+                fuel_type: {},
+                engine_type: {},
+                brand: {},
+                wattage_min: 0,
+                wattage_max: null,
+                capacity_min: 0,
+                capacity_max: null
+            };
+
+            f.querySelectorAll('.product_type input').forEach(function(checkbox) {
+                if(!filters.category[checkbox.dataset.category]) {
+                    filters.category[checkbox.dataset.category] = {};
+                }
+                filters.category[checkbox.dataset.category][checkbox.dataset.productType] = checkbox.checked;
+            });
+
+            f.querySelectorAll('.condition input').forEach(function(checkbox) {
+                filters.condition[checkbox.dataset.condition] = checkbox.checked;
+            });
+
+            f.querySelectorAll('.fuel_type input').forEach(function(checkbox) {
+                filters.fuel_type[checkbox.dataset.fuelType] = checkbox.checked;
+            });
+
+            f.querySelectorAll('.engine_type input').forEach(function(checkbox) {
+                filters.engine_type[checkbox.dataset.engineType] = checkbox.checked;
+            });
+
+            f.querySelectorAll('.brand input').forEach(function(checkbox) {
+                filters.brand[checkbox.dataset.brand] = checkbox.checked;
+            });
+
+            var wattage_min = f.querySelector('#wattage_min');
+            if(wattage_min && wattage_min.value) {
+                filters.wattage_min = Number(wattage_min.value);
+            }
+
+            var wattage_max = f.querySelector('#wattage_max');
+            if(wattage_max && wattage_max.value) {
+                filters.wattage_max = Number(wattage_max.value);
+            }
+
+            var capacity_min = f.querySelector('#capacity_min');
+            if(capacity_min && capacity_min.value) {
+                filters.capacity_min = Number(capacity_min.value);
+            }
+
+            var capacity_max = f.querySelector('#capacity_max');
+            if(capacity_max && capacity_max.value) {
+                filters.capacity_max = Number(capacity_max.value);
+            }
+
+            return filters;
+        }
+
+        function apply_filters() {
+            var filters = get_filters();
+            var rows = document.querySelectorAll('#powerprices-body .generator');
+            
+            rows.forEach(function(row) {
+                var show = true;
+                
+                var condition = row.dataset.condition;
+                if(!filters.condition[condition]) {
+                    show = false;
+                }
+                
+                var productType = row.dataset.productType;
+                if(filters.category.generator && !filters.category.generator[productType]) {
+                    show = false;
+                }
+                
+                var fuelType = row.dataset.fuelType;
+                if(!filters.fuel_type[fuelType]) {
+                    show = false;
+                }
+                
+                var engineType = row.dataset.engineType;
+                if(!filters.engine_type[engineType]) {
+                    show = false;
+                }
+                
+                var brand = row.dataset.brand;
+                if(!filters.brand[brand]) {
+                    show = false;
+                }
+                
+                var wattage = Number(row.dataset.wattage);
+                if(wattage < filters.wattage_min) {
+                    show = false;
+                }
+                if(filters.wattage_max && wattage > filters.wattage_max) {
+                    show = false;
+                }
+                
+                var capacity = Number(row.dataset.capacity);
+                if(capacity < filters.capacity_min) {
+                    show = false;
+                }
+                if(filters.capacity_max && capacity > filters.capacity_max) {
+                    show = false;
+                }
+                
+                if(show) {
+                    row.classList.remove('filtered-out');
+                } else {
+                    row.classList.add('filtered-out');
+                }
+            });
+        }
+
+        function init_filters() {
+            f.addEventListener('change', function(e) {
+                if(e.target.type === 'checkbox' || e.target.type === 'radio') {
+                    apply_filters();
+                }
+            });
+            
+            f.addEventListener('input', function(e) {
+                if(e.target.type === 'number') {
+                    apply_filters();
+                }
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            init_filters();
+            loadProductsFromCSV();
+        });
+    </script>
+</body>
+</html>
