@@ -675,7 +675,7 @@ function createProductRow(product) {
     if (index === 7) { // Last column (affiliate link)
         td.className = 'name';
         // Use innerHTML for the affiliate link to render HTML properly
-        td.innerHTML = cellContent && cellContent !== 'N/A' ? cellContent : 'No link available';
+        td.innerHTML = cellContent; // This should render the HTML links
     } else {
         td.textContent = cellContent;
     }
@@ -720,10 +720,10 @@ function createProductRow(product) {
             return condition.charAt(0).toUpperCase() + condition.slice(1);
         }
 
-function extractBrandFromLink(product.affiliate_url) {
-    if (!product.affiliate_url) return 'other_brand';
+function extractBrandFromLink(affiliateUrl) {
+    if (!affiliateUrl) return 'other_brand';
     
-    // Extract brand name from the beginning of the product.affiliate_url text
+    // Extract brand name from the beginning of the affiliate URL text
     // Assumes format: "Brand Name Product Description <a href=..."
     const brandMap = {
         'honda': 'honda',
@@ -744,7 +744,7 @@ function extractBrandFromLink(product.affiliate_url) {
         'pecron': 'pecron'
     };
     
-    const linkLower = product.affiliate_url.toLowerCase();
+    const linkLower = affiliateUrl.toLowerCase();
     
     for (const [key, value] of Object.entries(brandMap)) {
         if (linkLower.includes(key)) {
