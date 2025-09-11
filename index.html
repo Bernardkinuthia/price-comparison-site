@@ -660,27 +660,28 @@ function createProductRow(product) {
     tr.setAttribute('data-brand', brandFromLink);
     
     // Create table cells
-    const cells = [
-        formatPrice(product.price), // Price
-        '', // Price per Watt (calculated by JS)
-        product.output_wattage || '0', // Output Wattage
-        formatCapacity(product.battery_capacity), // Battery Capacity
-        formatFuelType(product.fuel_type), // Fuel Type
-        formatEngineType(product.engine_type), // Engine Type
-        formatCondition(product.condition), // Condition
-        product.affiliate_link || 'N/A' // Affiliate Link with product name
-    ];
+	const cells = [
+    formatPrice(product.price), // Price
+    '', // Price per Watt (calculated by JS)
+    product.output_wattage || '0', // Output Wattage
+    formatCapacity(product.battery_capacity), // Battery Capacity
+    formatFuelType(product.fuel_type), // Fuel Type
+    formatEngineType(product.engine_type), // Engine Type
+    formatCondition(product.condition), // Condition
+    product.affiliate_url || 'N/A' // Changed from affiliate_link to affiliate_url
+];
     
-    cells.forEach((cellContent, index) => {
-        const td = document.createElement('td');
-        if (index === 7) { // Last column (affiliate link)
-            td.className = 'name';
-            td.innerHTML = cellContent;
-        } else {
-            td.textContent = cellContent;
-        }
-        tr.appendChild(td);
-    });
+	cells.forEach((cellContent, index) => {
+    const td = document.createElement('td');
+    if (index === 7) { // Last column (affiliate link)
+        td.className = 'name';
+        // Use innerHTML for the affiliate link to render HTML properly
+        td.innerHTML = cellContent && cellContent !== 'N/A' ? cellContent : 'No link available';
+    } else {
+        td.textContent = cellContent;
+    }
+    tr.appendChild(td);
+});
     
     return tr;
 }
