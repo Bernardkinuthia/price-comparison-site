@@ -1,5 +1,4 @@
 name: Update Prices
-
 on:
   schedule:
     - cron: "0 */6 * * *"   # run every 6 hours
@@ -11,22 +10,18 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-
       - name: Install dependencies
-        run: pip install amazon-paapi
-
+        run: pip install paapi5-python-sdk requests
       - name: Run price updater
         env:
           AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
           AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
           AMAZON_ASSOCIATE_TAG: ${{ secrets.AMAZON_ASSOCIATE_TAG }}
         run: python update_prices.py
-
       - name: Commit & Push changes
         run: |
           git config user.name "github-actions"
