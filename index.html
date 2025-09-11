@@ -511,7 +511,6 @@
             
             console.log(`Parsed ${productsData.length} products from CSV`);
 			console.log(`Parsed ${productsData.length} products from CSV`);
-debugCSVStructure(); // Add this line here instead
         }
 		
 		function debugCSVStructure() {
@@ -653,6 +652,9 @@ function extractProductNameFromLink(affiliateLink) {
 
 function refreshTablePrices() {
     const rows = document.querySelectorAll('#powerprices-body .generator');
+    let updatedCount = 0;
+    
+    console.log(`Refreshing ${rows.length} table rows`);
     
     rows.forEach((row, index) => {
         if (index < productsData.length) {
@@ -660,12 +662,24 @@ function refreshTablePrices() {
             
             // Update price cell (first column)
             const priceCell = row.children[0];
-            priceCell.textContent = formatPrice(product.price);
+            const oldPriceText = priceCell.textContent;
+            const newPriceText = formatPrice(product.price);
             
-            // Optionally update row attributes for filtering
-            row.setAttribute('data-price', product.price || '0');
+            console.log(`Row ${index}: Old price: "${oldPriceText}", New price: "${newPriceText}"`);
+            
+            if (newPriceText !== '' && newPriceText !== oldPriceText) {
+                priceCell.textContent = newPriceText;
+                updatedCount++;
+                console.log(`Updated price cell ${index}: ${oldPriceText} -> ${newPriceText}`);
+            }
+            
+            // Update row attributes for filtering
+            const priceValue = product.price ? product.price.toString().replace(/[$,]/g, '') : '0';
+            row.setAttribute('data-price', priceValue);
         }
     });
+    
+    console.log(`Refreshed ${updatedCount} price cells in the table`);
 }
 
 function createProductRow(product) {
