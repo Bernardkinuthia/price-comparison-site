@@ -10,8 +10,15 @@ access_key = os.getenv("AMAZON_ACCESS_KEY")
 secret_key = os.getenv("AMAZON_SECRET_KEY")
 associate_tag = os.getenv("AMAZON_ASSOCIATE_TAG")
 
-# Initialize Amazon API client
-amazon = AmazonApi(access_key, secret_key, associate_tag, "US")  # "US" marketplace
+# Configure the API
+configuration = Configuration()
+configuration.access_key = access_key
+configuration.secret_key = secret_key
+configuration.host = "webservices.amazon.com"
+configuration.region = "us-east-1"
+
+# Create API instance
+api_instance = DefaultApi(configuration=configuration)
 
 # Read products from CSV
 products = []
@@ -23,16 +30,58 @@ with open("products.csv", newline="", encoding="utf-8") as csvfile:
 results = []
 for product in products:
     try:
-        response = amazon.get_items(product["asin"])
-        item = response["ItemsResult"]["Items"][0]
-        price = item["Offers"]["Listings"][0]["Price"]["DisplayAmount"]
-
+        # Create request for this product
+        request = GetItemsRequest(
+            partner_tag=associate_tag,
+            partner_type=PartnerType.ASSOCIATES,
+            marketplace="www.amazon.com",
+            item_ids=[product["asin"]],
+            resources=[
+                "ItemInfo.Title",
+                "Offers.Listings.Price",
+                "ItemInfo.ProductInfo"
+            ]
+        )
+        
+        # Make API call
+        response = api_instance.get_items(request)
+        
+        # Extract price from response
+        if response.items_result and response.items_result.items:
+            item = response.items_result.items[0]
+            price = "N/A"
+            
+            # Try to get price from offers
+            if (hasattr(item, 'offers') and 
+                item.offers and 
+                item.offers.listings and 
+                len(item.offers.listings) > 0 and
+                item.offers.listings[0].price):
+                price = item.offers.listings[0].price.display_amount
+            
+            results.append({
+                "asin": product["asin"],
+                "title": product["title"],
+                "affiliate_link": product["affiliate_link"],
+                "price": price,
+                "last_updated": datetime.datetime.utcnow().isoformat()
+            })
+        else:
+            results.append({
+                "asin": product["asin"],
+                "title": product["title"],
+                "affiliate_link": product["affiliate_link"],
+                "price": "N/A",
+                "error": "No item data returned"
+            })
+            
+    except ApiException as e:
         results.append({
             "asin": product["asin"],
             "title": product["title"],
             "affiliate_link": product["affiliate_link"],
-            "price": price,
-            "last_updated": datetime.datetime.utcnow().isoformat()
+            "price": "N/A",
+            "error": f"API Error: {str(e)}"
         })
     except Exception as e:
         results.append({
