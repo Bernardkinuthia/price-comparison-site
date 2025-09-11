@@ -752,12 +752,19 @@ function rebuildTableWithPrices() {
             return 'large_wattage';
         }
 
-        function formatPrice(price) {
-            if (!price || price === '0' || price === '') return '';
-            const numPrice = parseFloat(price);
-            if (isNaN(numPrice)) return '';
-            return '$' + numPrice.toFixed(2);
-        }
+function formatPrice(price) {
+    if (!price || price === '0' || price === '') return '';
+    
+    // If price already formatted (starts with $), return as-is
+    if (typeof price === 'string' && price.startsWith('$')) {
+        return price;
+    }
+    
+    // Otherwise format as number
+    const numPrice = parseFloat(price.toString().replace(/[$,]/g, ''));
+    if (isNaN(numPrice)) return '';
+    return '$' + numPrice.toFixed(2);
+}
 
         function formatCapacity(capacity) {
             if (!capacity || capacity === '0') return '';
