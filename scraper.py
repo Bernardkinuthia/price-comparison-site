@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class AmazonPriceScraper:
-    def __init__(self, excel_file='data/products.xlsx', html_file='public/index.html'):
+    def __init__(self, excel_file='data/product_asin.xlsx', html_file='public/index.html'):
         self.excel_file = excel_file
         self.html_file = html_file
         self.session = requests.Session()
