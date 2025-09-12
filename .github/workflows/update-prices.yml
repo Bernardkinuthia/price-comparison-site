@@ -1,4 +1,4 @@
-name: Update Product Prices (Amazon API)
+name: Update Product Prices and HTML
 
 on:
   schedule:
@@ -25,7 +25,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        pip install pandas requests
+        pip install pandas requests beautifulsoup4
         
     - name: Verify CSV file
       run: |
@@ -43,15 +43,19 @@ jobs:
       run: |
         python scraper.py
         
+    - name: Update HTML with prices
+      run: |
+        python update_html.py
+        
     - name: Commit results
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add products.json
+        git add products.json index.html
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update prices via Amazon API $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git commit -m "Update prices and HTML via Amazon API $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
         fi
         
