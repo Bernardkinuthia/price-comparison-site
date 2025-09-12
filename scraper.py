@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Amazon Price Scraper and Website Updater - GitHub Actions Only
-Reads Excel file from repository, fetches Amazon prices, updates HTML website
+Reads CSV file from repository, fetches Amazon prices, updates HTML website
 """
 
 import pandas as pd
@@ -21,8 +21,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class AmazonPriceScraper:
-    def __init__(self, excel_file='data/product_asin.xlsx', html_file='public/index.html'):
-        self.excel_file = excel_file
+    def __init__(self, csv_file='product_asin.csv', html_file='public/index.html'):
+        self.csv_file = csv_file
         self.html_file = html_file
         self.session = requests.Session()
         
@@ -46,15 +46,15 @@ class AmazonPriceScraper:
             'Upgrade-Insecure-Requests': '1',
         }
         
-    def read_excel_data(self):
-        """Read product data from Excel file"""
+    def read_csv_data(self):
+        """Read product data from CSV file"""
         try:
-            if not os.path.exists(self.excel_file):
-                logger.error(f"Excel file not found: {self.excel_file}")
+            if not os.path.exists(self.csv_file):
+                logger.error(f"CSV file not found: {self.csv_file}")
                 return None
                 
-            df = pd.read_excel(self.excel_file)
-            logger.info(f"Successfully read {len(df)} products from {self.excel_file}")
+            df = pd.read_csv(self.csv_file)
+            logger.info(f"Successfully read {len(df)} products from {self.csv_file}")
             
             # Validate required columns
             required_columns = ['asin', 'affiliate_link']
@@ -64,7 +64,7 @@ class AmazonPriceScraper:
             
             return df
         except Exception as e:
-            logger.error(f"Error reading Excel file: {e}")
+            logger.error(f"Error reading CSV file: {e}")
             return None
     
     def extract_asin_from_url(self, url):
@@ -181,8 +181,8 @@ class AmazonPriceScraper:
         return None, None, None
     
     def process_products(self):
-        """Process all products from Excel and fetch their prices"""
-        df = self.read_excel_data()
+        """Process all products from CSV and fetch their prices"""
+        df = self.read_csv_data()
         if df is None:
             return None
         
