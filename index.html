@@ -187,88 +187,96 @@
             margin-bottom: 8px;
         }
 
-        /* Responsive Design */
-        @media screen and (max-width: 768px) {
-            #filters {
-                position: relative;
-                width: 100%;
-                height: auto;
-                padding: 10px;
-                margin-bottom: 20px;
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-            }
-            
-            #affiliate-disclosure {
-                margin-left: 10px;
-            }
-            
-            #main-content {
-                margin-left: 0;
-                padding: 10px;
-            }
-            
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            table {
-                min-width: 800px;
-                font-size: 12px;
-            }
-            
-            th, td {
-                padding: 6px 4px;
-                white-space: nowrap;
-            }
-            
-            th:nth-child(8), td:nth-child(8) {
-                width: 300px;
-                min-width: 250px;
-                white-space: normal;
-            }
-            
-            #filters {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            
-            #filters fieldset {
-                width: auto;
-                min-width: 150px;
-                flex: 1;
-            }
-            
-            #filters fieldset.last {
-                width: 100%;
-                flex-basis: 100%;
-            }
+        #loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
         }
+		/* Responsive Design */
+@media screen and (max-width: 768px) {
+    #filters {
+        position: relative;
+        width: 100%;
+        height: auto;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    #affiliate-disclosure {
+        margin-left: 10px;
+    }
+    
+    #main-content {
+        margin-left: 0;
+        padding: 10px;
+    }
+    
+    /* Make table horizontally scrollable on mobile */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 800px;
+        font-size: 12px;
+    }
+    
+    th, td {
+        padding: 6px 4px;
+        white-space: nowrap;
+    }
+    
+    /* Adjust column widths for mobile */
+    th:nth-child(8), td:nth-child(8) {
+        width: 300px;
+        min-width: 250px;
+        white-space: normal;
+    }
+    
+    /* Stack filter fieldsets horizontally on mobile */
+    #filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    #filters fieldset {
+        width: auto;
+        min-width: 150px;
+        flex: 1;
+    }
+    
+    #filters fieldset.last {
+        width: 100%;
+        flex-basis: 100%;
+    }
+}
 
-        @media screen and (max-width: 480px) {
-            body {
-                font-size: 9pt;
-            }
-            
-            table {
-                font-size: 10px;
-            }
-            
-            th, td {
-                padding: 4px 2px;
-            }
-            
-            #filters fieldset {
-                min-width: 120px;
-            }
-            
-            th:nth-child(8), td:nth-child(8) {
-                width: 200px;
-                min-width: 180px;
-            }
-        }
+@media screen and (max-width: 480px) {
+    body {
+        font-size: 9pt;
+    }
+    
+    table {
+        font-size: 10px;
+    }
+    
+    th, td {
+        padding: 4px 2px;
+    }
+    
+    #filters fieldset {
+        min-width: 120px;
+    }
+    
+    th:nth-child(8), td:nth-child(8) {
+        width: 200px;
+        min-width: 180px;
+    }
+}
     </style>
 </head>
 <body>
@@ -386,36 +394,28 @@
         </fieldset>
     </div>
 
-    <div id="main-content">        
-        <div class="table-wrapper">
-            <table id="Generator Prices">
-                <thead>
-                    <tr id="powerprices-head">
-                        <th>Price</th>
-                        <th>Price&nbsp;/<br>&nbsp;Watt</th>
-                        <th>Output<br>Wattage<br>(W)</th>
-                        <th>Battery<br>Capacity<br>(Wh)</th>
-                        <th>Fuel&nbsp;<br>Type</th>
-                        <th>Engine&nbsp;<br>Type</th>
-                        <th>Condition</th>
-                        <th>Affiliate Link</th>
-                    </tr>
-                </thead>
-                <tbody id="powerprices-body" lang="en">
-                    <tr class="generator" data-product-key="" data-product-type="large_wattage" data-condition="new" data-capacity="1024" data-wattage="2200" data-fuel-type="solar" data-engine-type="electric" data-brand="other_brand"><td>Price unavailable</td><td>N/A</td><td>2200</td><td>1024Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/4nuXr7n" target="_blank" rel="noopener noreferrer">DJI Power 1000 Portable Power Station, 1024Wh LiFePO4 Battery, 2200W (Peak 2600W) AC/140W USB-C Output, 23db Ultra-Silent, Solar Generator For Home Backup, Camping(Solar Panel Optional)</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="medium_wattage" data-condition="new" data-capacity="768" data-wattage="1000" data-fuel-type="solar" data-engine-type="electric" data-brand="other_brand"><td>Price unavailable</td><td>N/A</td><td>1000</td><td>768Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/3Keq1LE" target="_blank" rel="noopener noreferrer">BLUETTI Solar Generator AC70, 768Wh LiFePO4 Battery Backup w/ 2 1000W AC Outlets (Power Lifting 2000W), 100W Type-C, for Road Trip, Off-grid, Power Outage (Solar Panel Optional)</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="medium_wattage" data-condition="new" data-capacity="768" data-wattage="800" data-fuel-type="solar" data-engine-type="electric" data-brand="ef_ecoflow"><td>$379.00</td><td>$0.47</td><td>800</td><td>768Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/47D9dI1" target="_blank" rel="noopener noreferrer">EF ECOFLOW Portable Power Station RIVER 2 Pro, 768Wh LiFePO4 Battery, 70 Min Fast Charging, 4X800W (X-Boost 1600W) AC Outlets, Solar Generator for Outdoor Camping/RVs/Home Use Black</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="large_wattage" data-condition="new" data-capacity="2048" data-wattage="2400" data-fuel-type="solar" data-engine-type="electric" data-brand="anker"><td>$1,999.00</td><td>$0.83</td><td>2400</td><td>2048Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/3VvFERD" target="_blank" rel="noopener noreferrer">Anker SOLIX F2000 Portable Power Station, PowerHouse 767, 2400W Solar Generator, GaNPrime Battery Generators for Home Use, LiFePO4 Power Station for Outdoor Camping, and RVs (Solar Panel Optional)</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="large_wattage" data-condition="new" data-capacity="5040" data-wattage="7200" data-fuel-type="solar" data-engine-type="electric" data-brand="jackery"><td>$5,199.00</td><td>$0.72</td><td>7200</td><td>5040Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/46eaByB" target="_blank" rel="noopener noreferrer">Jackery Solar Generator 5000 Plus Portable Power Station with 2x 500W Solar Panels and Smart Transfer Switch, 5040Wh Power Station, 7200W AC Output Solar Generator for Home Use, Emergency Backup</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="large_wattage" data-condition="new" data-capacity="2048" data-wattage="2200" data-fuel-type="solar" data-engine-type="electric" data-brand="other_brand"><td>$709.00</td><td>$0.32</td><td>2200</td><td>2048Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/4pdQbyt" target="_blank" rel="noopener noreferrer">DABBSSON 2000L Solar Generator(2025 New), 2048Wh Semi-Solid LiFePO4, 2200W AC Output�6, P-Boost 3300W, Compact&Lightweight, 1.3X Runtime, Portable Power Station for Camping/Home/RV</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="small_wattage" data-condition="new" data-capacity="380" data-wattage="300" data-fuel-type="solar" data-engine-type="electric" data-brand="zerokor"><td>$229.98</td><td>$0.77</td><td>300</td><td>380Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name"><a href="https://amzn.to/4n0UDyW" target="_blank" rel="noopener noreferrer">ZeroKor Portable Solar Generator, 300W Portable Power Station with Foldable 60W Solar Panel, 110V Pure Sine Wave 280Wh Lithium Battery Pack with USB DC AC Outlet for Home Use RV Van Outdoor Camping-Orange</a></td></tr>
-                <tr class="generator" data-product-key="" data-product-type="medium_wattage" data-condition="new" data-capacity="999" data-wattage="1000" data-fuel-type="solar" data-engine-type="electric" data-brand="allpowers"><td>Price unavailable</td><td>N/A</td><td>1000</td><td>999Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name">ALLPOWERS 600w Portable Power Station, 299Wh LiFePO4 Battery Backup, R600(Peak 1200w) Solar Generator, 1 Hour Fast Charge Solar Power Bank, for Home Outdoor Travel Emergency RV</td></tr>
-                <tr class="generator" data-product-key="" data-product-type="medium_wattage" data-condition="new" data-capacity="299" data-wattage="600" data-fuel-type="solar" data-engine-type="electric" data-brand="grecell"><td>Price unavailable</td><td>N/A</td><td>600</td><td>299Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name">GRECELL 1000W Portable Power Station With 2x 100W Solar Panels, 999Wh Backup Lithium Battery, Pure Sine Wave AC Outlet, 60W PD Quick Charge Solar Generator Set for Outdoor Emergency Camping Travel</td></tr>
-                <tr class="generator" data-product-key="" data-product-type="large_wattage" data-condition="new" data-capacity="1024" data-wattage="1800" data-fuel-type="solar" data-engine-type="electric" data-brand="pecron"><td>Price unavailable</td><td>N/A</td><td>1800</td><td>1024Wh</td><td>Solar</td><td>Electric</td><td>New</td><td class="name">Pecron Portable Power Station E1000LFP, 1024Wh/1800W LiFePO4 Battery Backup, Solar Generator Expandable to 4096Wh, Fast Charging Power Station for Emergencies, Camping, RV, Home Use</td></tr>
-                <tr class="generator" data-product-key="" data-product-type="large_wattage" data-condition="used" data-capacity="2048" data-wattage="2400" data-fuel-type="solar" data-engine-type="electric" data-brand="other_brand"><td>Price unavailable</td><td>N/A</td><td>2400</td><td>2048Wh</td><td>Solar</td><td>Electric</td><td>Used</td><td class="name"><a href="https://amzn.to/3VMi3fi" target="_blank" rel="noopener noreferrer">Keenergy P2001 Plus 2400W Power Station with 200W Solar Panel, 2048Wh Solar Generator with 4 AC Outlets (5000W Peak), 1.5H Full Charging, APP Control Battery Backup for Home, Camping & RVs</a></td></tr>
-                </tbody>
-            </table>
-        </div>
+    <div id="main-content">
+        <div id="loading">Loading products...</div>
+        
+    <div class="table-wrapper">
+		<table id="Generator Prices" style="display: none;">
+            <thead>
+                <tr id="powerprices-head">
+                    <th>Price</th>
+                    <th>Price&nbsp;/<br>&nbsp;Watt</th>
+                    <th>Output<br>Wattage<br>(W)</th>
+                    <th>Battery<br>Capacity<br>(Wh)</th>
+                    <th>Fuel&nbsp;<br>Type</th>
+                    <th>Engine&nbsp;<br>Type</th>
+                    <th>Condition</th>
+                    <th>Affiliate Link</th>
+                </tr>
+            </thead>
+            <tbody id="powerprices-body" lang="en">
+                <!-- Table rows will be populated from CSV -->
+            </tbody>
+        </table>
+	</div>
 
         <div style="margin-top: 30px;">
             <p id="detailed-disclosures" style="
@@ -448,7 +448,7 @@
                 border-top: 1px solid #ddd;
                 margin-bottom: 20px;
             ">
-                Last updated: 9/12/2025 12:51:31 AM | Showing 11 products (5 with prices, 6 price unavailable)
+                <!-- Will be populated by JavaScript -->
             </p>
             
             <div style="text-align: center; padding: 15px; border-top: 1px solid #eee;">
@@ -463,9 +463,434 @@
     </div>
 
     <script>
-        // Simplified JavaScript for filtering only (no data loading)
+        var page_locale = 'us';
+        var default_filters = {};
         var f = document.getElementById('filters');
+        var productsData = [];
 
+        // CSV loading and parsing functions
+        async function loadProductsFromCSV() {
+            try {
+                // Load CSV from GitHub raw file
+                const response = await fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/product_names.csv');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                console.log('CSV loaded successfully');
+                
+				// Add these missing lines:
+				parseCSVData(csvText);
+				await populateTable();
+                
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                document.getElementById('loading').textContent = 'Error loading product data. Please refresh the page.';
+            }
+        }
+
+        function parseCSVData(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            
+            productsData = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = parseCSVLine(lines[i]);
+                const product = {};
+                
+                headers.forEach((header, index) => {
+                    product[header] = values[index] ? values[index].trim().replace(/^"|"$/g, '') : '';
+                });
+                
+                productsData.push(product);
+            }
+            
+			console.log(`Parsed ${productsData.length} products from CSV`);
+debugCSVStructure();
+        }
+		
+		function debugCSVStructure() {
+    if (productsData.length > 0) {
+        console.log('CSV Headers found:', Object.keys(productsData[0]));
+        console.log('First product sample:', productsData[0]);
+        console.log('Sample link field:', productsData[0].link);
+    }
+}
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+
+async function populateTable() {
+    const tbody = document.getElementById('powerprices-body');
+    const table = document.getElementById('Generator Prices');
+    const loading = document.getElementById('loading');
+    
+    if (!tbody || productsData.length === 0) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // Generate table rows from CSV data
+    productsData.forEach(product => {
+        const row = createProductRow(product);
+        tbody.appendChild(row);
+    });
+    
+    // Show table and hide loading
+    table.style.display = 'table';
+    loading.style.display = 'none';
+    
+    // Update prices from JSON after table is created
+    await updatePricesFromJSON();
+    
+    // Calculate price per watt (will use updated prices)
+    calculatePricePerWatt();
+    
+    // Update stats
+    updateLastUpdatedInfo();
+    
+    // Apply initial filters
+    apply_filters();
+	
+}
+
+async function updatePricesFromJSON() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/prices.json');
+        
+        if (!response.ok) {
+            console.warn(`JSON price update failed: ${response.status}`);
+            return;
+        }
+        
+        const priceData = await response.json();
+        console.log('Price updates loaded successfully', priceData);
+        
+        // Update prices in the productsData array
+        updateProductPrices(priceData);
+        
+        // Rebuild the entire table with new prices
+        rebuildTableWithPrices();
+        
+        // Recalculate price per watt with new prices
+        calculatePricePerWatt();
+        
+        // Apply filters
+        apply_filters();
+        
+        console.log('Prices updated successfully');
+        
+    } catch (error) {
+        console.warn('Error loading price updates (continuing with CSV prices):', error);
+    }
+}
+
+function updateProductPrices(priceData) {
+    console.log('Updating prices for', productsData.length, 'products');
+    let matchedCount = 0;
+    let updatedCount = 0;
+    
+    productsData.forEach((product, index) => {
+        // Match CSV 'link' field with JSON 'affiliate_link' field
+        const matchingPriceEntry = priceData.find(priceItem => 
+            priceItem.link === product.link || // Try affiliate_link first
+            priceItem.link === product.link              // Fallback to link
+        );
+        
+        if (matchingPriceEntry) {
+            matchedCount++;
+            console.log(`Match found for product ${index}:`, product.link);
+            
+            // Update the product if price is available and not "N/A"
+            if (matchingPriceEntry.price && matchingPriceEntry.price !== "N/A") {
+                const oldPrice = product.price || 'No price';
+                product.price = matchingPriceEntry.price;
+                product.last_updated = matchingPriceEntry.last_updated;
+                updatedCount++;
+                
+                console.log(`Price updated for product ${index}: ${oldPrice} -> ${product.price}`);
+            } else {
+                console.log(`Price not available for product ${index}: ${matchingPriceEntry.price}`);
+            }
+        } else {
+            console.log(`No match found for product ${index} with link:`, product.link);
+        }
+    });
+    
+    console.log(`Matching complete: ${matchedCount} products matched, ${updatedCount} prices updated`);
+}
+
+function extractProductNameFromLink(affiliateLink) {
+    if (!affiliateLink) return '';
+    
+    // Extract text before the first <a> tag if it's an HTML link
+    const match = affiliateLink.match(/^([^<]+)/);
+    return match ? match[1].trim() : affiliateLink;
+}
+
+function refreshTablePrices() {
+    const rows = document.querySelectorAll('#powerprices-body .generator');
+    let updatedCount = 0;
+    
+    console.log(`Refreshing ${rows.length} table rows`);
+    
+    rows.forEach((row, index) => {
+        if (index < productsData.length) {
+            const product = productsData[index];
+            
+            // Update price cell (first column)
+            const priceCell = row.children[0];
+            const oldPriceText = priceCell.textContent;
+            const newPriceText = formatPrice(product.price);
+            
+            console.log(`Row ${index}: Old price: "${oldPriceText}", New price: "${newPriceText}"`);
+            
+            if (newPriceText !== '' && newPriceText !== oldPriceText) {
+                priceCell.textContent = newPriceText;
+                updatedCount++;
+                console.log(`Updated price cell ${index}: ${oldPriceText} -> ${newPriceText}`);
+            }
+            
+            // Update row attributes for filtering
+            const priceValue = product.price ? product.price.toString().replace(/[$,]/g, '') : '0';
+            row.setAttribute('data-price', priceValue);
+        }
+    });
+    
+    console.log(`Refreshed ${updatedCount} price cells in the table`);
+}
+
+function createProductRow(product) {
+    const tr = document.createElement('tr');
+    tr.className = 'generator';
+    
+    // Extract brand from affiliate_link for filtering
+    // Extract brand from the correct field (check your CSV structure)
+const brandFromLink = extractBrandFromLink(product.affiliate_url || product.link || '');
+    
+    // Set data attributes for filtering
+    tr.setAttribute('data-product-key', product.product_key || '');
+    tr.setAttribute('data-product-type', determineProductType(product.output_wattage));
+    tr.setAttribute('data-condition', (product.condition || 'new').toLowerCase());
+    tr.setAttribute('data-capacity', product.battery_capacity || '0');
+    tr.setAttribute('data-wattage', product.output_wattage || '0');
+    tr.setAttribute('data-fuel-type', (product.fuel_type || 'gasoline').toLowerCase().replace(' ', '_'));
+    tr.setAttribute('data-engine-type', (product.engine_type || 'electric').toLowerCase().replace(' ', '_'));
+    tr.setAttribute('data-brand', brandFromLink);
+    
+    // Create table cells
+	const cells = [
+    formatPrice(product.price), // Price
+    '', // Price per Watt (calculated by JS)
+    product.output_wattage || '0', // Output Wattage
+    formatCapacity(product.battery_capacity), // Battery Capacity
+    formatFuelType(product.fuel_type), // Fuel Type
+    formatEngineType(product.engine_type), // Engine Type
+    formatCondition(product.condition), // Condition
+    formatAffiliateLink(product) // Changed this line
+];
+    
+	cells.forEach((cellContent, index) => {
+    const td = document.createElement('td');
+    if (index === 7) { // Last column (affiliate link)
+        td.className = 'name';
+        // Use innerHTML for the affiliate link to render HTML properly
+        td.innerHTML = cellContent; // This should render the HTML links
+    } else {
+        td.textContent = cellContent;
+    }
+    tr.appendChild(td);
+});
+    
+    return tr;
+}
+
+function rebuildTableWithPrices() {
+    const tbody = document.getElementById('powerprices-body');
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // Recreate all rows with updated prices
+    productsData.forEach(product => {
+        const row = createProductRow(product);
+        tbody.appendChild(row);
+    });
+    
+    console.log('Table completely rebuilt with updated prices');
+}
+
+        // Helper functions
+        function determineProductType(wattage) {
+            const watts = parseInt(wattage) || 0;
+            if (watts <= 500) return 'small_wattage';
+            if (watts <= 1500) return 'medium_wattage';
+            return 'large_wattage';
+        }
+
+function formatPrice(price) {
+    if (!price || price === '0' || price === '' || price === 'N/A') {
+        return 'Price unavailable';
+    }
+    
+    // If price already formatted (starts with $), return as-is
+    if (typeof price === 'string' && price.startsWith('$')) {
+        return price;
+    }
+    
+    // Otherwise format as number
+    const numPrice = parseFloat(price.toString().replace(/[$,]/g, ''));
+    if (isNaN(numPrice) || numPrice <= 0) {
+        return 'Price unavailable';
+    }
+    return '$' + numPrice.toFixed(2);
+}
+
+        function formatCapacity(capacity) {
+            if (!capacity || capacity === '0') return '';
+            return capacity.toString().includes('Wh') ? capacity : capacity + 'Wh';
+        }
+
+        function formatFuelType(fuelType) {
+            if (!fuelType) return 'N/A';
+            return fuelType.charAt(0).toUpperCase() + fuelType.slice(1);
+        }
+
+        function formatEngineType(engineType) {
+            if (!engineType) return 'N/A';
+            return engineType.charAt(0).toUpperCase() + engineType.slice(1);
+        }
+
+        function formatCondition(condition) {
+            if (!condition) return 'New';
+            return condition.charAt(0).toUpperCase() + condition.slice(1);
+        }
+
+// Function to format affiliate links
+function formatAffiliateLink(product) {
+    // If we have both link URL and display text (affiliate_url as display text)
+    if (product.link && product.affiliate_url) {
+        const displayText = product.affiliate_url.trim();
+        return `<a href="${product.link}" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
+    }
+    
+    // If only link is available, use it as both URL and display text
+    if (product.link) {
+        return `<a href="${product.link}" target="_blank" rel="noopener noreferrer">${product.link}</a>`;
+    }
+    
+    // If affiliate_url contains HTML (backward compatibility)
+    if (product.affiliate_url && product.affiliate_url.includes('<a href=')) {
+        return product.affiliate_url;
+    }
+    
+    // Fallback
+    return product.affiliate_url || 'N/A';
+}
+
+function extractBrandFromLink(affiliateUrl) {
+    if (!affiliateUrl) return 'other_brand';
+    
+    const brandMap = {
+        'honda': 'honda',
+        'yamaha': 'yamaha', 
+        'generac': 'generac',
+        'champion': 'champion',
+        'westinghouse': 'westinghouse',
+        'zerokor': 'zerokor',
+        'ecoflow': 'ef_ecoflow',
+        'bulleti': 'bulleti',
+        'jackery': 'jackery',
+        'anker': 'anker',
+        'marbero': 'marbero',
+        'oupes': 'oupes',
+        'grecell': 'grecell',
+        'allwei': 'allwei',
+        'allpowers': 'allpowers',
+        'pecron': 'pecron'
+    };
+    
+    // Check both the display text (affiliate_url) and any URL text
+    const textToCheck = affiliateUrl.toLowerCase();
+    
+    for (const [key, value] of Object.entries(brandMap)) {
+        if (textToCheck.includes(key)) {
+            return value;
+        }
+    }
+    
+    return 'other_brand';
+}
+
+		function calculatePricePerWatt() {
+    const rows = document.querySelectorAll('#powerprices-body .generator');
+    
+    rows.forEach(row => {
+        const priceCell = row.children[0];
+        const pricePerWattCell = row.children[1];
+        const wattageCell = row.children[2];
+        
+        const priceText = priceCell.textContent.trim();
+        
+        // Check if price is unavailable
+        if (priceText === 'Price unavailable') {
+            pricePerWattCell.textContent = 'N/A';
+            return;
+        }
+        
+        const price = parseFloat(priceText.replace(/[$,]/g, ''));
+        const wattageText = wattageCell.textContent.trim();
+        const wattage = parseFloat(wattageText);
+        
+        if (wattage > 0 && !isNaN(price) && price > 0) {
+            const pricePerWatt = (price / wattage).toFixed(2);
+            pricePerWattCell.textContent = '$' + pricePerWatt;
+        } else {
+            pricePerWattCell.textContent = 'N/A';
+        }
+    });
+}
+
+		function updateLastUpdatedInfo() {
+    const lastUpdatedElement = document.getElementById('last-updated-info');
+    const now = new Date();
+    
+    // Count products with valid prices vs unavailable prices
+    const validPriceCount = productsData.filter(p => {
+        const price = p.price;
+        return price && price !== '0' && price !== '' && price !== 'N/A' && parseFloat(price.toString().replace(/[$,]/g, '')) > 0;
+    }).length;
+    
+    const unavailableCount = productsData.length - validPriceCount;
+    
+    lastUpdatedElement.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} ;
+}
+
+        // Filter functions (existing code)
         function get_filters() {
             var filters = {
                 category: {},
@@ -595,9 +1020,10 @@
             });
         }
 
-        // Initialize filters when page loads
+        // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             init_filters();
+            loadProductsFromCSV();
         });
     </script>
 </body>
