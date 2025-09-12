@@ -39,7 +39,7 @@ jobs:
         
     - name: Verify CSV file exists
       run: |
-        if [ ! -f "data/product_asin.csv" ]; then
+        if [ ! -f "product_asin.csv" ]; then
           echo "❌ CSV file not found at data/product_asin.csv"
           echo "Please upload your CSV file to the data/ folder"
           exit 1
