@@ -1,0 +1,22 @@
+{
+  "name": "generator-price-updater",
+  "version": "1.0.0",
+  "description": "Scripts to update generator prices from Amazon API",
+  "main": "fetch-amazon-prices.js",
+  "scripts": {
+    "fetch": "node fetch-amazon-prices.js",
+    "update": "node update-html.js",
+    "full-update": "node fetch-amazon-prices.js && node update-html.js"
+  },
+  "dependencies": {
+    "paapi5-nodejs-sdk": "^1.0.0",
+    "cheerio": "^1.0.0-rc.12",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
