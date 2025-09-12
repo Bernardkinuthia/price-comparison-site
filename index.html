@@ -759,15 +759,6 @@ function updateProductPrice(productKey, newPrice) {
     }
 }
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    init_filters();
-	calculatePricePerWatt(); // Add this line
-    
-    // Set current timestamp
-    var now = new Date();
-    document.getElementById('update-timestamp').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
-});
 </script>
 
 // Auto Price Updater for Generator Comparison Page
@@ -1115,6 +1106,13 @@ const updateStyles = `
 
 // Initialize the price updater when the page loads
 document.addEventListener('DOMContentLoaded', function() {
+    init_filters();
+    calculatePricePerWatt();
+    
+    // Set current timestamp
+    var now = new Date();
+    document.getElementById('update-timestamp').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+    
     // Add update indicator styles
     document.head.insertAdjacentHTML('beforeend', updateStyles);
     
@@ -1125,8 +1123,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.appendChild(indicator);
     
     // Initialize the price updater
-    // Change the path to match your JSON file location
-    window.priceUpdater = new PriceUpdater('/api/generator-prices.json');
+    // Change this path to match your actual JSON file location in GitHub
+    window.priceUpdater = new PriceUpdater('https://github.com/Bernardkinuthia/price-comparison-site/blob/main/products.json');
     
     // Expose manual update function to console for testing
     window.updatePrices = () => window.priceUpdater.forceUpdate();
