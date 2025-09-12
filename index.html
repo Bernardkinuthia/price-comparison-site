@@ -753,7 +753,9 @@ function rebuildTableWithPrices() {
         }
 
 function formatPrice(price) {
-    if (!price || price === '0' || price === '') return '';
+    if (!price || price === '0' || price === '' || price === 'N/A') {
+        return 'Price unavailable';
+    }
     
     // If price already formatted (starts with $), return as-is
     if (typeof price === 'string' && price.startsWith('$')) {
@@ -762,7 +764,9 @@ function formatPrice(price) {
     
     // Otherwise format as number
     const numPrice = parseFloat(price.toString().replace(/[$,]/g, ''));
-    if (isNaN(numPrice)) return '';
+    if (isNaN(numPrice) || numPrice <= 0) {
+        return 'Price unavailable';
+    }
     return '$' + numPrice.toFixed(2);
 }
 
@@ -842,36 +846,49 @@ function extractBrandFromLink(affiliateUrl) {
     return 'other_brand';
 }
 
-        function calculatePricePerWatt() {
-            const rows = document.querySelectorAll('#powerprices-body .generator');
-            
-            rows.forEach(row => {
-                const priceCell = row.children[0];
-                const pricePerWattCell = row.children[1];
-                const wattageCell = row.children[2];
-                
-                const priceText = priceCell.textContent.trim();
-                const price = parseFloat(priceText.replace(/[$,]/g, ''));
-                
-                const wattageText = wattageCell.textContent.trim();
-                const wattage = parseFloat(wattageText);
-                
-                if (wattage > 0 && !isNaN(price)) {
-                    const pricePerWatt = (price / wattage).toFixed(2);
-                    pricePerWattCell.textContent = '$' + pricePerWatt;
-                } else {
-                    pricePerWattCell.textContent = 'N/A';
-                }
-            });
+		function calculatePricePerWatt() {
+    const rows = document.querySelectorAll('#powerprices-body .generator');
+    
+    rows.forEach(row => {
+        const priceCell = row.children[0];
+        const pricePerWattCell = row.children[1];
+        const wattageCell = row.children[2];
+        
+        const priceText = priceCell.textContent.trim();
+        
+        // Check if price is unavailable
+        if (priceText === 'Price unavailable') {
+            pricePerWattCell.textContent = 'N/A';
+            return;
         }
+        
+        const price = parseFloat(priceText.replace(/[$,]/g, ''));
+        const wattageText = wattageCell.textContent.trim();
+        const wattage = parseFloat(wattageText);
+        
+        if (wattage > 0 && !isNaN(price) && price > 0) {
+            const pricePerWatt = (price / wattage).toFixed(2);
+            pricePerWattCell.textContent = '$' + pricePerWatt;
+        } else {
+            pricePerWattCell.textContent = 'N/A';
+        }
+    });
+}
 
-        function updateLastUpdatedInfo() {
-            const lastUpdatedElement = document.getElementById('last-updated-info');
-            const now = new Date();
-            const availableCount = productsData.filter(p => p.price && parseFloat(p.price) > 0).length;
-            
-            lastUpdatedElement.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} | Showing ${productsData.length} products (${availableCount} with current prices)`;
-        }
+		function updateLastUpdatedInfo() {
+    const lastUpdatedElement = document.getElementById('last-updated-info');
+    const now = new Date();
+    
+    // Count products with valid prices vs unavailable prices
+    const validPriceCount = productsData.filter(p => {
+        const price = p.price;
+        return price && price !== '0' && price !== '' && price !== 'N/A' && parseFloat(price.toString().replace(/[$,]/g, '')) > 0;
+    }).length;
+    
+    const unavailableCount = productsData.length - validPriceCount;
+    
+    lastUpdatedElement.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} | Showing ${productsData.length} products (${validPriceCount} with prices, ${unavailableCount} price unavailable)`;
+}
 
         // Filter functions (existing code)
         function get_filters() {
