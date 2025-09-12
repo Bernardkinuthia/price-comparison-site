@@ -1,0 +1,10 @@
+{
+  "name": "static-generator-site",
+  "version": "1.0.0",
+  "description": "Static generator for price comparison site",
+  "main": "generate-static.js",
+  "scripts": {
+    "build": "node generate-static.js"
+  },
+  "dependencies": {}
+}
