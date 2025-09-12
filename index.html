@@ -887,7 +887,7 @@ function extractBrandFromLink(affiliateUrl) {
     
     const unavailableCount = productsData.length - validPriceCount;
     
-    lastUpdatedElement.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} ;
+    lastUpdatedElement.textContent = `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} | Showing ${productsData.length} products (${validPriceCount} with prices, ${unavailableCount} price unavailable)`;
 }
 
         // Filter functions (existing code)
