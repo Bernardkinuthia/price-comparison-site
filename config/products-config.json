@@ -1,0 +1,101 @@
+{
+  "products": [
+    {
+      "key": "dji-power-1000-portable",
+      "asin": "B0EXAMPLE1",
+      "name": "DJI Power 1000 Portable Power Station",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "bluetti-ac70-768wh",
+      "asin": "B0EXAMPLE2",
+      "name": "BLUETTI Solar Generator AC70",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "ecoflow-river-2-pro",
+      "asin": "B0EXAMPLE3",
+      "name": "EF ECOFLOW Portable Power Station RIVER 2 Pro",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "anker-solix-f2000",
+      "asin": "B0EXAMPLE4",
+      "name": "Anker SOLIX F2000 Portable Power Station",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "jackery-5000-plus",
+      "asin": "B0EXAMPLE5",
+      "name": "Jackery Solar Generator 5000 Plus",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "dabbsson-2000l",
+      "asin": "B0EXAMPLE6",
+      "name": "DABBSSON 2000L Solar Generator",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "zerokor-300w-portable",
+      "asin": "B0EXAMPLE7",
+      "name": "ZeroKor Portable Solar Generator",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "grecell-1000w-100w-solar-panel",
+      "asin": "B0EXAMPLE8",
+      "name": "GRECELL 1000W Portable Power Station",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "allpowers-600w-299wh",
+      "asin": "B0EXAMPLE9",
+      "name": "ALLPOWERS 600W Portable Power Station",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "pecron-e1000lfp",
+      "asin": "B0EXAMPLE10",
+      "name": "Pecron Portable Power Station E1000LFP",
+      "affiliate_link": "https://amzn.to/4niyXhi",
+      "backup_asin": null
+    },
+    {
+      "key": "ampace-portable-power-station-andes-300-266wh-batt",
+      "asin": "B0EXAMPLE11",
+      "name": "AMPACE Portable Power Station Andes 300",
+      "affiliate_link": "https://amzn.to/4n2c1U1",
+      "backup_asin": null
+    },
+    {
+      "key": "growatt-portable-power-station-infinity-2000-black",
+      "asin": "B0EXAMPLE12",
+      "name": "GROWATT Portable Power Station INFINITY 2000",
+      "affiliate_link": "https://amzn.to/4nMYAaD",
+      "backup_asin": null
+    },
+    {
+      "key": "litheli-portable-power-station-eclair-1000-1800w-s",
+      "asin": "B0EXAMPLE13",
+      "name": "Litheli Portable Power Station Eclair 1000",
+      "affiliate_link": "https://amzn.to/4n88zY8",
+      "backup_asin": null
+    }
+  ],
+  "settings": {
+    "max_requests_per_second": 1,
+    "retry_attempts": 3,
+    "retry_delay_ms": 5000,
+    "request_timeout_ms": 10000
+  }
+}
