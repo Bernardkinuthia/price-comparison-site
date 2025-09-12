@@ -1,0 +1,62 @@
+name: Update Amazon Prices
+
+on:
+  schedule:
+    # Runs every 6 hours (at 00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches: [main]
+    paths: 
+      - 'config/products-config.json'
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: scripts/package.json
+    
+    - name: Install dependencies
+      run: |
+        cd scripts
+        npm install
+    
+    - name: Fetch Amazon prices
+      env:
+        AMAZON_ACCESS_KEY_ID: ${{ secrets.AMAZON_ACCESS_KEY_ID }}
+        AMAZON_SECRET_ACCESS_KEY: ${{ secrets.AMAZON_SECRET_ACCESS_KEY }}
+        AMAZON_ASSOCIATE_TAG: ${{ secrets.AMAZON_ASSOCIATE_TAG }}
+        AMAZON_REGION: ${{ vars.AMAZON_REGION || 'us-east-1' }}
+      run: |
+        cd scripts
+        node fetch-amazon-prices.js
+    
+    - name: Update HTML file
+      run: |
+        cd scripts
+        node update-html.js
+    
+    - name: Commit and push if changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update prices - $(date '+%Y-%m-%d %H:%M UTC')"
+          git push
+        fi
