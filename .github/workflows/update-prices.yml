@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allow manual trigger
   push:
     paths:
-      - 'data/product_asin.csv'  # Trigger when CSV file is updated
+      - 'product_asin.csv'  # Trigger when CSV file is updated
 jobs:
   update-prices:
     runs-on: ubuntu-latest
