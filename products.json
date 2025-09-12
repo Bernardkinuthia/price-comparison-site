@@ -1,52 +1,80 @@
 {
-  "last_updated": "2025-09-12T15:52:31.001772",
+  "last_updated": "2025-09-12T16:22:10.225801",
   "total_products": 3,
-  "successful_prices": 0,
+  "successful_prices": 3,
+  "api_used": true,
   "products": [
     {
       "asin": "B0DX23PGPC",
-      "title": "Product B0DX23PGPC",
-      "price": null,
-      "currency": "$",
-      "affiliate_link": "https://amzn.to/4n2c1U1",
-      "last_updated": "2025-09-12T15:52:24.428271",
-      "price_available": false,
+      "title": "AMPACE Portable Power Station Andes 300, 266Wh Battery with 300W AC/100W USB-C Output, 1Hr Fast Charging, 8.2lbs Solar Generator for RV, Outdoors, Camping batteries, Traveling, (Solar Panel Optional)",
+      "price": 1.39,
+      "currency": "USD",
+      "features": [
+        "45MIN FAST CHARGING - Ampace Andes 300 can achieve a 0-80% charge in 45 minutes. With a capacity of 266Wh, this power station features 6 output ports, including 2 AC, 2 USB-A, a USB-C, and a car charger output, meeting the charging needs of most devices.",
+        "SUSTAINABLE SOLAR ENERGY - When off-grid, harness the sun's energy and achieve a full recharge in as fast as 2.5 hours when connecting a 100W Solar Panel, reducing your grid reliance and helping you achieve energy independence.",
+        "QUIET AND RELIABLE HOME BACKUP \u2013 The Andes 300 power station can charge and discharge normally in environments ranging from -4\u00b0F to 113\u00b0F, ensuring that sudden temperature changes do not cause the device to malfunction. With a near-silent 40dB sleep mode and rapid 20ms EPS switchover, it's ideal for outdoor camping, off-grid living, home backup and emergencies.",
+        "LIGHT AND PORTABLE - Weighing just 8.2 lbs and featuring a one-piece aluminum handle, the Ampace Andes 300 is incredibly easy to carry. It's a reliable choice for outdoor camping, road trips, RV adventures, and home backup. Power your life!",
+        "SMART APP CONTROL - With the intelligent App, via WiFi or Bluetooth, it\u2019s easier than ever to monitor your device's status, including remaining battery level. Ampace Andes 300 portable power station is equipped with a durable LFP battery, maintaining over 80% of its original capacity even after 2,500 charge cycles, offering longevity exceeding 10 years.",
+        "PACKAGE LIST - Ampace Andes 300 portable power station, 100W solar panel, AC charging cable, car charging cable, cable bag, user manual, and our friendly customer service."
+      ],
+      "last_updated": "2025-09-12T16:22:10.225188",
+      "price_available": true,
+      "api_source": true,
       "output_wattage": "300",
       "battery_capacity": "266",
       "fuel_type": "Solar",
       "engine_type": "Electric",
       "condition": "New",
-      "link_text": "AMPACE Portable Power Station Andes 300, 266Wh Battery with 300W AC/100W USB-C Output, 1Hr Fast Charging, 8.2lbs Solar Generator for RV, Outdoors, Camping batteries, Traveling, (Solar Panel Optional)"
+      "link_text": "AMPACE Portable Power Station Andes 300, 266Wh Battery with 300W AC/100W USB-C Output, 1Hr Fast Charging, 8.2lbs Solar Generator for RV, Outdoors, Camping batteries, Traveling, (Solar Panel Optional)",
+      "affiliate_link": "https://amzn.to/4n2c1U1"
     },
     {
       "asin": "B0DMVVN28Z",
-      "title": "Product B0DMVVN28Z",
-      "price": null,
-      "currency": "$",
-      "affiliate_link": "https://amzn.to/4nMYAaD",
-      "last_updated": "2025-09-12T15:52:26.782652",
-      "price_available": false,
+      "title": "GROWATT Portable Power Station \uff0cINFINITY 2000 Black Electric Solar Generator\uff0c2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)",
+      "price": 7.99,
+      "currency": "USD",
+      "features": [
+        "\u30102\u20136kWh Expandable\u3011Scale up from 2048Wh to 6kWh with two extra batteries - ideal for 3\u20137 day road trips, outdoor adventures, or 1\u20133 days of emergency backup. Its plug-and-play design makes powering your lifestyle effortless.",
+        "\u3010Superfast Charging\u3011Fully recharged in 1.6 hrs via AC or 2.3 hrs via solar. With AC + solar combo charging, it tops up in just 1.5 hrs. The perfect outdoor power choice - recharge anytime, ready for every trip.",
+        "\u301099% Device Compatibility\u3011Delivering 2400W output (boosts to 3400W with Watt+), plus 15 versatile ports, it powers nearly all your home and outdoor gear. With dedicated TT-30 and Anderson ports, it\u2019s the ultimate choice for RVs and outdoor adventurers.",
+        "\u3010Must-have for Outdoor\u3011Equipped with TT-30 and 30A Anderson ports, it delivers hassle-free RV power and seamless integration into SUV or van systems. Its exclusive Cold Start technology ensures flawless operation even in harsh winter conditions as low as -22\u00b0F.",
+        "\u3010Reliable Emergency Power\u3011With 15ms EPS switchover, your devices stay safe and uninterrupted. Keep computers, security systems, internet, and even pet devices running smoothly through any outage.",
+        "\u3010Trusted Quality & Service\u3011Powered by EV-grade LFP battery cells, INFINITY 2000 PRO offers a decade-long lifespan and industry-leading safety. With Growatt\u2019s top global reputation in residential solar, you\u2019ll enjoy peace of mind with proven quality, responsive service, and a customer-first commitment."
+      ],
+      "last_updated": "2025-09-12T16:22:10.225501",
+      "price_available": true,
+      "api_source": true,
       "output_wattage": "2400",
       "battery_capacity": "2048",
       "fuel_type": "Solar",
       "engine_type": "Electric",
       "condition": "New",
-      "link_text": "GROWATT Portable Power Station ?INFINITY 2000 Black Electric Solar Generator?2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)"
+      "link_text": "GROWATT Portable Power Station ?INFINITY 2000 Black Electric Solar Generator?2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)",
+      "affiliate_link": "https://amzn.to/4nMYAaD"
     },
     {
       "asin": "B0D2N5B9TC",
-      "title": "Product B0D2N5B9TC",
-      "price": null,
-      "currency": "$",
-      "affiliate_link": "https://amzn.to/4n88zY8",
-      "last_updated": "2025-09-12T15:52:31.001559",
-      "price_available": false,
+      "title": "Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)",
+      "price": 4.4999,
+      "currency": "USD",
+      "features": [
+        "1H Fast Charging: Experience the convenience of 10 times faster charging speed with Detect Speed, enabling a full charge in just 55 minutes. With 3 versatile charging options - AC, car, and solar - WIth Litheli portable power station you'll always be prepared for unexpected emergencies and power your devices on the go.",
+        "Versatile Removable Batteries: The dual 4.0Ah removable batteries are compatible with Litheli U20 series and can be used as power banks to charge your smartphone, laptop, or other small devices. Whether you're at home, in the office, or on the go, these portable batteries provide reliable and flexible power wherever you need it.",
+        "Litheli Omni-Boost Technology: Harness the impressive 1800W output power to effortlessly power up to 90% of electrical appliances. Whether you're camping, enjoying outdoor activities, or facing unexpected power outages, this outdoor generator will always have you covered.",
+        "Long Battery Life, Safe Usage: The solar generator Eclair 1000 is equipped with high-quality LiFePO cells and advanced BMS, ensuring a long-lasting and reliable power supply. Additionally, this portable generator with low-noise fan allows you to enjoy quiet, uninterrupted power without any disturbance.",
+        "Unique UPS Function: Feel confident knowing that the power station Eclair 1000 provides a built-in Uninterruptible Power Supply function, safeguarding your devices and work from sudden power outages. Stay connected and protect your valuable equipment, even during unexpected disruptions.",
+        "Power Up to 14 Devices: Litheli generator for home use with a maximum output power of 1800W (peak power of 2200W), the Eclair1000 enables you to power a wide range of devices simultaneously. From smartphones and laptops to kitchen appliances and more, experience the freedom of limitless power supply anytime, anywhere."
+      ],
+      "last_updated": "2025-09-12T16:22:10.225559",
+      "price_available": true,
+      "api_source": true,
       "output_wattage": "1800",
       "battery_capacity": "1069",
       "fuel_type": "Solar",
       "engine_type": "Electric",
       "condition": "New",
-      "link_text": "Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)"
+      "link_text": "Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)",
+      "affiliate_link": "https://amzn.to/4n88zY8"
     }
   ]
 }
