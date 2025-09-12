@@ -724,79 +724,55 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-// Price Update Script for Generator Comparison Site
-// This script fetches prices from the JSON file and updates the HTML table
+// Fixed Price Update Script for Generator Comparison Site
+// This version handles CORS issues and includes better error handling
 
 class PriceUpdater {
-    constructor(jsonUrl = 'https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/products.json') {
-        this.jsonUrl = jsonUrl;
+    constructor() {
+        // Use multiple fallback URLs in case one fails
+        this.jsonUrls = [
+            'https://api.github.com/repos/Bernardkinuthia/price-comparison-site/contents/products.json',
+            'https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/products.json'
+        ];
         this.lastUpdateTime = null;
     }
 
     async fetchPriceData() {
+        // Try GitHub API first (more reliable for CORS)
         try {
-            const response = await fetch(this.jsonUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            console.log('Fetching price data from GitHub API...');
+            const response = await fetch(this.jsonUrls[0]);
+            if (response.ok) {
+                const data = await response.json();
+                // GitHub API returns base64 encoded content
+                const content = atob(data.content.replace(/\s/g, ''));
+                return JSON.parse(content);
             }
-            const data = await response.json();
-            return data;
         } catch (error) {
-            console.error('Error fetching price data:', error);
-            return null;
-        }
-    }
-
-    updatePrices(priceData) {
-        if (!priceData || !priceData.products) {
-            console.error('Invalid price data structure');
-            return;
+            console.warn('GitHub API failed, trying raw URL:', error);
         }
 
-        // Create a map of affiliate links to price data for quick lookup
-        const priceMap = new Map();
-        priceData.products.forEach(product => {
-            if (product.affiliate_link) {
-                priceMap.set(product.affiliate_link, {
-                    price: product.price_available ? product.price : 'Price unavailable',
-                    pricePerWatt: this.calculatePricePerWatt(product)
-                });
+        // Fallback to raw GitHub URL
+        try {
+            console.log('Fetching price data from raw GitHub URL...');
+            const response = await fetch(this.jsonUrls[1]);
+            if (response.ok) {
+                return await response.json();
             }
-        });
+        } catch (error) {
+            console.error('Raw GitHub URL also failed:', error);
+        }
 
-        // Update HTML table rows
-        const tableRows = document.querySelectorAll('#powerprices-body tr.generator');
-        let updatedCount = 0;
+        // If both fail, try with no-cors mode (limited functionality)
+        try {
+            console.log('Trying no-cors mode...');
+            const response = await fetch(this.jsonUrls[1], { mode: 'no-cors' });
+            console.log('No-cors response received, but content not accessible');
+        } catch (error) {
+            console.error('All fetch attempts failed:', error);
+        }
 
-        tableRows.forEach(row => {
-            const linkElement = row.querySelector('td.name a');
-            if (!linkElement) return;
-
-            const affiliateLink = linkElement.getAttribute('href');
-            const priceInfo = priceMap.get(affiliateLink);
-            
-            if (priceInfo) {
-                // Update price cell
-                const priceCell = row.querySelector('td.price');
-                if (priceCell) {
-                    priceCell.textContent = priceInfo.price;
-                    // Add data attribute for sorting/filtering if needed
-                    row.setAttribute('data-price', priceInfo.price === 'Price unavailable' ? '0' : priceInfo.price.replace(/[^0-9.]/g, ''));
-                }
-
-                // Update price per watt cell
-                const pricePerWattCell = row.querySelector('td.price-per-watt');
-                if (pricePerWattCell) {
-                    pricePerWattCell.textContent = priceInfo.pricePerWatt;
-                }
-
-                updatedCount++;
-            }
-        });
-
-        console.log(`Updated prices for ${updatedCount} products`);
-        this.updateLastUpdateTimestamp(priceData.last_updated);
-        this.updateProductCount();
+        return null;
     }
 
     calculatePricePerWatt(product) {
@@ -813,6 +789,89 @@ class PriceUpdater {
 
         const pricePerWatt = (price / wattage).toFixed(2);
         return `$${pricePerWatt}`;
+    }
+
+    updatePrices(priceData) {
+        if (!priceData || !priceData.products) {
+            console.error('Invalid price data structure');
+            return;
+        }
+
+        console.log('Price data received:', priceData.products.length, 'products');
+
+        // Create a map of affiliate links to price data for quick lookup
+        const priceMap = new Map();
+        priceData.products.forEach(product => {
+            if (product.affiliate_link) {
+                priceMap.set(product.affiliate_link, {
+                    price: product.price_available ? product.price : 'Price unavailable',
+                    pricePerWatt: this.calculatePricePerWatt(product)
+                });
+            }
+        });
+
+        console.log('Created price map with', priceMap.size, 'entries');
+
+        // Update HTML table rows
+        const tableRows = document.querySelectorAll('#powerprices-body tr.generator');
+        console.log('Found', tableRows.length, 'table rows');
+        
+        let updatedCount = 0;
+
+        tableRows.forEach((row, index) => {
+            const linkElement = row.querySelector('td.name a');
+            if (!linkElement) {
+                console.warn(`Row ${index}: No link element found`);
+                return;
+            }
+
+            const affiliateLink = linkElement.getAttribute('href');
+            const priceInfo = priceMap.get(affiliateLink);
+            
+            console.log(`Row ${index}: Link = ${affiliateLink}, Price Info =`, priceInfo);
+            
+            if (priceInfo) {
+                // Update price cell
+                const priceCell = row.querySelector('td.price');
+                if (priceCell) {
+                    priceCell.textContent = priceInfo.price;
+                    priceCell.style.color = priceInfo.price === 'Price unavailable' ? '#999' : '#000';
+                    
+                    // Add data attribute for sorting/filtering if needed
+                    const numericPrice = priceInfo.price === 'Price unavailable' ? '0' : 
+                                       priceInfo.price.replace(/[^0-9.]/g, '');
+                    row.setAttribute('data-price', numericPrice);
+                }
+
+                // Update price per watt cell
+                const pricePerWattCell = row.querySelector('td.price-per-watt');
+                if (pricePerWattCell) {
+                    pricePerWattCell.textContent = priceInfo.pricePerWatt;
+                    pricePerWattCell.style.color = priceInfo.pricePerWatt === 'N/A' ? '#999' : '#000';
+                }
+
+                updatedCount++;
+            } else {
+                console.warn(`No price info found for link: ${affiliateLink}`);
+                
+                // Set unavailable for unmatched items
+                const priceCell = row.querySelector('td.price');
+                const pricePerWattCell = row.querySelector('td.price-per-watt');
+                
+                if (priceCell) {
+                    priceCell.textContent = 'Price unavailable';
+                    priceCell.style.color = '#999';
+                }
+                if (pricePerWattCell) {
+                    pricePerWattCell.textContent = 'N/A';
+                    pricePerWattCell.style.color = '#999';
+                }
+            }
+        });
+
+        console.log(`Successfully updated prices for ${updatedCount} products`);
+        this.updateLastUpdateTimestamp(priceData.last_updated);
+        this.updateProductCount();
     }
 
     updateLastUpdateTimestamp(lastUpdated) {
@@ -837,59 +896,108 @@ class PriceUpdater {
     }
 
     async init() {
-        console.log('Initializing price updater...');
+        console.log('=== Initializing price updater ===');
+        
+        // Check if required elements exist
+        const tableBody = document.getElementById('powerprices-body');
+        const rows = document.querySelectorAll('#powerprices-body tr.generator');
+        
+        if (!tableBody) {
+            console.error('Table body not found!');
+            return;
+        }
+        
+        if (rows.length === 0) {
+            console.error('No generator rows found!');
+            return;
+        }
+
+        console.log(`Found ${rows.length} generator rows`);
+
         const priceData = await this.fetchPriceData();
         if (priceData) {
             this.updatePrices(priceData);
             this.lastUpdateTime = new Date();
-            console.log('Price update completed successfully');
+            console.log('=== Price update completed successfully ===');
         } else {
-            console.error('Failed to fetch price data');
+            console.error('=== Failed to fetch price data ===');
+            // Set all prices to unavailable if fetch fails
+            this.setAllPricesUnavailable();
         }
     }
 
-    // Check for updates every 12 hours
-    startAutoUpdate() {
-        // Update immediately
-        this.init();
-        
-        // Then update every 12 hours (43200000 milliseconds)
-        setInterval(() => {
-            console.log('Checking for price updates...');
-            this.init();
-        }, 12 * 60 * 60 * 1000);
+    setAllPricesUnavailable() {
+        const tableRows = document.querySelectorAll('#powerprices-body tr.generator');
+        tableRows.forEach(row => {
+            const priceCell = row.querySelector('td.price');
+            const pricePerWattCell = row.querySelector('td.price-per-watt');
+            
+            if (priceCell) {
+                priceCell.textContent = 'Price unavailable';
+                priceCell.style.color = '#999';
+            }
+            if (pricePerWattCell) {
+                pricePerWattCell.textContent = 'N/A';
+                pricePerWattCell.style.color = '#999';
+            }
+        });
     }
 
     // Force update method for manual triggers
     async forceUpdate() {
-        console.log('Force updating prices...');
+        console.log('=== Force updating prices ===');
         await this.init();
     }
 }
 
-// Initialize the price updater when the page loads
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize when DOM is fully loaded
+function initializePriceUpdater() {
+    console.log('DOM loaded, initializing price updater...');
+    
     const priceUpdater = new PriceUpdater();
     
-    // Start automatic updates
-    priceUpdater.startAutoUpdate();
+    // Update immediately
+    priceUpdater.init();
     
-    // Make priceUpdater globally available for manual updates if needed
+    // Make globally available for debugging
     window.priceUpdater = priceUpdater;
     
-    // Optional: Add a manual refresh button (uncomment if needed)
-    /*
+    // Add manual refresh button for testing
     const refreshButton = document.createElement('button');
-    refreshButton.textContent = 'Refresh Prices';
-    refreshButton.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 1000; padding: 10px; background: #007cba; color: white; border: none; border-radius: 5px; cursor: pointer;';
-    refreshButton.addEventListener('click', () => priceUpdater.forceUpdate());
+    refreshButton.textContent = '🔄 Refresh Prices';
+    refreshButton.style.cssText = `
+        position: fixed; 
+        top: 10px; 
+        right: 10px; 
+        z-index: 1000; 
+        padding: 8px 12px; 
+        background: #007cba; 
+        color: white; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer;
+        font-size: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    refreshButton.addEventListener('click', () => {
+        console.log('Manual refresh triggered');
+        priceUpdater.forceUpdate();
+    });
     document.body.appendChild(refreshButton);
-    */
-});
 
-// Export for use in other scripts if needed
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = PriceUpdater;
+    // Set up auto-update every 12 hours (optional - comment out if not needed)
+    // setInterval(() => {
+    //     console.log('Auto-updating prices...');
+    //     priceUpdater.init();
+    // }, 12 * 60 * 60 * 1000);
+}
+
+// Wait for DOM to be fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePriceUpdater);
+} else {
+    // DOM already loaded
+    initializePriceUpdater();
 }
 
 </body>
