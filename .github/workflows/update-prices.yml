@@ -39,8 +39,8 @@ jobs:
         
     - name: Verify Excel file exists
       run: |
-        if [ ! -f "data/products.xlsx" ]; then
-          echo "❌ Excel file not found at data/products.xlsx"
+        if [ ! -f "data/product_asin.xlsx" ]; then
+          echo "❌ Excel file not found at data/product_asin.xlsx"
           echo "Please upload your Excel file to the data/ folder"
           exit 1
         fi
