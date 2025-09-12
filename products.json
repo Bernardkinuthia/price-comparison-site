@@ -1,0 +1,52 @@
+{
+  "last_updated": "2025-09-12T15:52:31.001772",
+  "total_products": 3,
+  "successful_prices": 0,
+  "products": [
+    {
+      "asin": "B0DX23PGPC",
+      "title": "Product B0DX23PGPC",
+      "price": null,
+      "currency": "$",
+      "affiliate_link": "https://amzn.to/4n2c1U1",
+      "last_updated": "2025-09-12T15:52:24.428271",
+      "price_available": false,
+      "output_wattage": "300",
+      "battery_capacity": "266",
+      "fuel_type": "Solar",
+      "engine_type": "Electric",
+      "condition": "New",
+      "link_text": "AMPACE Portable Power Station Andes 300, 266Wh Battery with 300W AC/100W USB-C Output, 1Hr Fast Charging, 8.2lbs Solar Generator for RV, Outdoors, Camping batteries, Traveling, (Solar Panel Optional)"
+    },
+    {
+      "asin": "B0DMVVN28Z",
+      "title": "Product B0DMVVN28Z",
+      "price": null,
+      "currency": "$",
+      "affiliate_link": "https://amzn.to/4nMYAaD",
+      "last_updated": "2025-09-12T15:52:26.782652",
+      "price_available": false,
+      "output_wattage": "2400",
+      "battery_capacity": "2048",
+      "fuel_type": "Solar",
+      "engine_type": "Electric",
+      "condition": "New",
+      "link_text": "GROWATT Portable Power Station ?INFINITY 2000 Black Electric Solar Generator?2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)"
+    },
+    {
+      "asin": "B0D2N5B9TC",
+      "title": "Product B0D2N5B9TC",
+      "price": null,
+      "currency": "$",
+      "affiliate_link": "https://amzn.to/4n88zY8",
+      "last_updated": "2025-09-12T15:52:31.001559",
+      "price_available": false,
+      "output_wattage": "1800",
+      "battery_capacity": "1069",
+      "fuel_type": "Solar",
+      "engine_type": "Electric",
+      "condition": "New",
+      "link_text": "Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)"
+    }
+  ]
+}
