@@ -1,9 +1,10 @@
-# .github/workflows/build.yml
-name: Build Static Site
+name: Build and Deploy Static Site
 on:
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:  # Allow manual triggers
+  push:
+    branches: [ main ]
 
 jobs:
   build:
@@ -18,8 +19,21 @@ jobs:
       run: npm install
     - name: Build static site
       run: npm run build
-    - name: Deploy to Hostinger
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v1
       with:
-        deploy_key: ${{ secrets.DEPLOY_KEY }}
-        publish_dir: ./
+        path: ./
+        
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
