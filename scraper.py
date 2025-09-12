@@ -159,7 +159,7 @@ class AmazonProductFetcher:
                         len(item['Offers']['Listings']) > 0):
                         listing = item['Offers']['Listings'][0]
                         if 'Price' in listing:
-                            price = listing['Price']['Amount'] / 100  # Amazon returns cents
+                            price = listing['Price']['Amount']  # Amazon returns cents
                             currency = listing['Price']['Currency']
                     
                     # Get additional info if available
