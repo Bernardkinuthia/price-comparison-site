@@ -1,87 +1,55 @@
-name: Update Prices
+name: Update Product Prices
+
 on:
   schedule:
-    # Run every 12 hours (more reasonable for Amazon scraping)
-    - cron: '0 */12 * * *'
-  workflow_dispatch: # Allow manual trigger
+    - cron: '0 */12 * * *'  # Every 12 hours
+  workflow_dispatch:  # Manual trigger
   push:
     paths:
-      - 'product_asin.csv'  # Trigger when CSV file is updated
+      - 'product_asin.csv'
+
 jobs:
   update-prices:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Set up Python
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-        
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install pandas requests beautifulsoup4
         
-    - name: Verify CSV file exists
+    - name: Run scraper
       run: |
-        if [ ! -f "product_asin.csv" ]; then
-          echo "❌ CSV file not found at data/product_asin.csv"
-          echo "Please upload your CSV file to the data/ folder"
-          exit 1
-        fi
-        echo "✅ CSV file found"
-        
-    - name: Run price scraper
-      run: |
-        echo "🚀 Starting price scraper..."
         python scraper.py
         
-    - name: Check if files changed
-      id: verify-changed-files
-      run: |
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "changed=true" >> $GITHUB_OUTPUT
-        else
-          echo "changed=false" >> $GITHUB_OUTPUT
-        fi
-        
-    - name: Commit and push changes
-      if: steps.verify-changed-files.outputs.changed == 'true'
+    - name: Commit results
       run: |
         git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action Bot"
-        git add data/products-data.json public/index.html
-        git commit -m "🤖 Auto-update prices - $(date -u '+%Y-%m-%d %H:%M:%S UTC')" || exit 0
-        git push
+        git config --local user.name "GitHub Action"
+        git add products.json
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update prices $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
+        fi
         
-    - name: Deploy to GitHub Pages
-      if: steps.verify-changed-files.outputs.changed == 'true'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./public
-        
-    - name: Create summary
+    - name: Summary
       run: |
-        echo "## 📊 Price Update Summary" >> $GITHUB_STEP_SUMMARY
-        echo "- **Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-        if [ -f "data/products-data.json" ]; then
-          TOTAL_PRODUCTS=$(python -c "import json; data=json.load(open('data/products-data.json')); print(len(data))")
-          SUCCESSFUL_PRICES=$(python -c "import json; data=json.load(open('data/products-data.json')); print(len([p for p in data if p.get('price')]))")
-          echo "- **Total Products:** $TOTAL_PRODUCTS" >> $GITHUB_STEP_SUMMARY
-          echo "- **Successful Price Fetches:** $SUCCESSFUL_PRICES" >> $GITHUB_STEP_SUMMARY
-          echo "- **Success Rate:** $(python -c "print(f'{($SUCCESSFUL_PRICES/$TOTAL_PRODUCTS*100):.1f}%')")" >> $GITHUB_STEP_SUMMARY
+        if [ -f "products.json" ]; then
+          echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
+          TOTAL=$(python -c "import json; print(json.load(open('products.json'))['total_products'])")
+          SUCCESS=$(python -c "import json; print(json.load(open('products.json'))['successful_prices'])")
+          echo "- Total products: $TOTAL" >> $GITHUB_STEP_SUMMARY
+          echo "- Successful prices: $SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "- Success rate: $(python -c "print(f'{$SUCCESS/$TOTAL*100:.1f}%')")" >> $GITHUB_STEP_SUMMARY
         fi
