@@ -1,4 +1,4 @@
-name: Update Product Prices
+name: Update Product Prices (Amazon API)
 
 on:
   schedule:
@@ -25,9 +25,21 @@ jobs:
         
     - name: Install dependencies
       run: |
-        pip install pandas requests beautifulsoup4
+        pip install pandas requests
         
-    - name: Run scraper
+    - name: Verify CSV file
+      run: |
+        if [ ! -f "product_asin.csv" ]; then
+          echo "❌ CSV file not found"
+          exit 1
+        fi
+        echo "✅ CSV file found"
+        
+    - name: Run Amazon API fetcher
+      env:
+        AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
+        AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
+        AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
       run: |
         python scraper.py
         
@@ -39,17 +51,19 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update prices $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git commit -m "Update prices via Amazon API $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
         fi
         
     - name: Summary
       run: |
         if [ -f "products.json" ]; then
-          echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 API Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Data Source:** Amazon Product Advertising API" >> $GITHUB_STEP_SUMMARY
           TOTAL=$(python -c "import json; print(json.load(open('products.json'))['total_products'])")
           SUCCESS=$(python -c "import json; print(json.load(open('products.json'))['successful_prices'])")
-          echo "- Total products: $TOTAL" >> $GITHUB_STEP_SUMMARY
-          echo "- Successful prices: $SUCCESS" >> $GITHUB_STEP_SUMMARY
-          echo "- Success rate: $(python -c "print(f'{$SUCCESS/$TOTAL*100:.1f}%')")" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total products:** $TOTAL" >> $GITHUB_STEP_SUMMARY
+          echo "- **Successful prices:** $SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Success rate:** $(python -c "print(f'{$SUCCESS/$TOTAL*100:.1f}%')" 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
         fi
