@@ -770,5 +770,406 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+// Auto Price Updater for Generator Comparison Page
+// Add this script to your HTML file
+
+class PriceUpdater {
+    constructor(jsonFilePath = '/api/generator-prices.json') {
+        this.jsonFilePath = jsonFilePath;
+        this.updateInterval = 30 * 60 * 1000; // Check every 30 minutes
+        this.lastUpdateTime = null;
+        this.isUpdating = false;
+        
+        // Start the updater when page loads
+        this.init();
+    }
+
+    async init() {
+        console.log('Initializing Price Updater...');
+        
+        // Initial price fetch
+        await this.fetchAndUpdatePrices();
+        
+        // Set up periodic updates
+        setInterval(() => {
+            this.fetchAndUpdatePrices();
+        }, this.updateInterval);
+        
+        // Also check when page becomes visible (user returns to tab)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.fetchAndUpdatePrices();
+            }
+        });
+    }
+
+    async fetchAndUpdatePrices() {
+        if (this.isUpdating) {
+            console.log('Update already in progress, skipping...');
+            return;
+        }
+
+        this.isUpdating = true;
+        
+        try {
+            console.log('Fetching latest prices...');
+            
+            const response = await fetch(this.jsonFilePath, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Received price data:', data);
+
+            // Handle both single product and array of products
+            const products = Array.isArray(data) ? data : [data];
+            
+            let updatedCount = 0;
+            
+            products.forEach(product => {
+                if (this.updateProductPrice(product)) {
+                    updatedCount++;
+                }
+            });
+
+            console.log(`Updated ${updatedCount} product prices`);
+            
+            // Update timestamp
+            this.updateTimestamp();
+            
+            // Recalculate price per watt for all products
+            this.recalculatePricePerWatt();
+            
+            this.lastUpdateTime = new Date();
+            
+        } catch (error) {
+            console.error('Error fetching prices:', error);
+            this.showUpdateError();
+        } finally {
+            this.isUpdating = false;
+        }
+    }
+
+    updateProductPrice(product) {
+        // Try to find the row by ASIN first, then by product key
+        let row = this.findProductRow(product);
+        
+        if (!row) {
+            console.warn('Product row not found for:', product.title || product.asin);
+            return false;
+        }
+
+        // Extract numeric price from string like "$799.00"
+        const priceMatch = product.price?.match(/\$?([\d,]+\.?\d*)/);
+        const numericPrice = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : 0;
+
+        // Update the row's data attribute
+        row.dataset.price = numericPrice;
+
+        // Update the price cell display
+        const priceCell = row.querySelector('.price');
+        if (priceCell) {
+            if (numericPrice > 0 && product.price_available) {
+                priceCell.textContent = product.price;
+                priceCell.classList.remove('price-unavailable');
+            } else {
+                priceCell.textContent = 'N/A';
+                priceCell.classList.add('price-unavailable');
+            }
+        }
+
+        // Update other product details if they exist in the JSON
+        this.updateProductDetails(row, product);
+
+        console.log(`Updated price for ${product.title}: ${product.price}`);
+        return true;
+    }
+
+    findProductRow(product) {
+        // Strategy 1: Match by affiliate link (Primary method)
+        if (product.affiliate_link) {
+            const rows = document.querySelectorAll('#powerprices-body .generator');
+            for (let row of rows) {
+                const linkElement = row.querySelector('.name a');
+                if (linkElement && linkElement.href === product.affiliate_link) {
+                    console.log(`Found exact affiliate link match: ${product.affiliate_link}`);
+                    return row;
+                }
+            }
+            
+            // If exact match fails, try to match the shortened URL part (e.g., "4nMYAaD")
+            const shortCode = this.extractShortCode(product.affiliate_link);
+            if (shortCode) {
+                for (let row of rows) {
+                    const linkElement = row.querySelector('.name a');
+                    if (linkElement && linkElement.href.includes(shortCode)) {
+                        console.log(`Found affiliate short code match: ${shortCode}`);
+                        return row;
+                    }
+                }
+            }
+        }
+
+        // Strategy 2: Try to match by ASIN in the affiliate link (if available)
+        if (product.asin) {
+            const rows = document.querySelectorAll('#powerprices-body .generator');
+            for (let row of rows) {
+                const linkElement = row.querySelector('a[href*="amzn.to"]');
+                if (linkElement && linkElement.href.includes(product.asin)) {
+                    console.log(`Found ASIN match: ${product.asin}`);
+                    return row;
+                }
+            }
+        }
+
+        // Strategy 3: Match by specifications (wattage + capacity) - Most reliable fallback
+        if (product.output_wattage && product.battery_capacity) {
+            const rows = document.querySelectorAll('#powerprices-body .generator');
+            for (let row of rows) {
+                const wattage = row.dataset.wattage;
+                const capacity = row.dataset.capacity;
+                
+                // Handle capacity with "Wh" suffix
+                const cleanCapacity = capacity.replace(/Wh?$/i, '');
+                const productCapacity = product.battery_capacity.toString().replace(/Wh?$/i, '');
+                
+                if (wattage === product.output_wattage && cleanCapacity === productCapacity) {
+                    console.log(`Found specs match: ${product.output_wattage}W / ${productCapacity}Wh`);
+                    return row;
+                }
+            }
+        }
+
+        // Strategy 4: Match by product title similarity (least reliable)
+        if (product.title || product.link_text) {
+            const searchTitle = product.link_text || product.title;
+            const rows = document.querySelectorAll('#powerprices-body .generator');
+            for (let row of rows) {
+                const linkElement = row.querySelector('.name a');
+                if (linkElement) {
+                    const htmlTitle = linkElement.textContent.toLowerCase();
+                    const jsonTitle = searchTitle.toLowerCase();
+                    
+                    // Check for significant word matches
+                    if (this.calculateTitleSimilarity(htmlTitle, jsonTitle) > 0.7) {
+                        console.log(`Found title similarity match: ${searchTitle.substring(0, 50)}...`);
+                        return row;
+                    }
+                }
+            }
+        }
+
+        console.warn('No matching product found for:', {
+            affiliate_link: product.affiliate_link,
+            title: product.title?.substring(0, 50) + '...',
+            specs: `${product.output_wattage}W / ${product.battery_capacity}Wh`
+        });
+        
+        return null;
+    }
+
+    // Helper method to extract short code from Amazon affiliate links
+    extractShortCode(affiliateLink) {
+        // Extract code from URLs like "https://amzn.to/4nMYAaD"
+        const match = affiliateLink.match(/amzn\.to\/([A-Za-z0-9]+)/);
+        return match ? match[1] : null;
+    }
+
+    calculateTitleSimilarity(title1, title2) {
+        const words1 = title1.split(/\s+/).filter(w => w.length > 3);
+        const words2 = title2.split(/\s+/).filter(w => w.length > 3);
+        
+        let matches = 0;
+        for (let word1 of words1) {
+            if (words2.some(word2 => word2.includes(word1) || word1.includes(word2))) {
+                matches++;
+            }
+        }
+        
+        return matches / Math.max(words1.length, words2.length);
+    }
+
+    updateProductDetails(row, product) {
+        // Update link if provided
+        if (product.affiliate_link) {
+            const linkElement = row.querySelector('.name a');
+            if (linkElement) {
+                linkElement.href = product.affiliate_link;
+            }
+        }
+
+        // Update title if provided
+        if (product.link_text || product.title) {
+            const linkElement = row.querySelector('.name a');
+            if (linkElement) {
+                linkElement.textContent = product.link_text || product.title;
+            }
+        }
+
+        // Add data attribute for last update
+        row.dataset.lastUpdated = new Date().toISOString();
+    }
+
+    recalculatePricePerWatt() {
+        const rows = document.querySelectorAll('#powerprices-body .generator');
+        
+        rows.forEach(row => {
+            const pricePerWattCell = row.querySelector('.price-per-watt');
+            const wattage = Number(row.dataset.wattage);
+            const price = Number(row.dataset.price);
+            
+            if (pricePerWattCell) {
+                if (price > 0 && wattage > 0) {
+                    const pricePerWatt = (price / wattage).toFixed(3);
+                    pricePerWattCell.textContent = '$' + pricePerWatt;
+                    pricePerWattCell.classList.remove('price-unavailable');
+                } else {
+                    pricePerWattCell.textContent = 'N/A';
+                    pricePerWattCell.classList.add('price-unavailable');
+                }
+            }
+        });
+    }
+
+    updateTimestamp() {
+        const timestampElement = document.getElementById('update-timestamp');
+        if (timestampElement) {
+            const now = new Date();
+            timestampElement.textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+        }
+    }
+
+    showUpdateError() {
+        const timestampElement = document.getElementById('update-timestamp');
+        if (timestampElement) {
+            timestampElement.textContent = 'Error updating prices - ' + new Date().toLocaleTimeString();
+            timestampElement.style.color = '#dc3545';
+            
+            // Reset color after 5 seconds
+            setTimeout(() => {
+                timestampElement.style.color = '';
+            }, 5000);
+        }
+    }
+
+    // Method to manually trigger an update (useful for testing)
+    async forceUpdate() {
+        console.log('Forcing price update...');
+        await this.fetchAndUpdatePrices();
+    }
+}
+
+// Enhanced CSS for price update indicators
+const updateStyles = `
+<style>
+.price-unavailable {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.price-updated {
+    background-color: #d4edda;
+    transition: background-color 2s ease-out;
+}
+
+.update-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 1000;
+    display: none;
+}
+
+.update-indicator.show {
+    display: block;
+}
+
+.update-indicator.error {
+    background-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+    .update-indicator {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+}
+</style>
+`;
+
+// Initialize the price updater when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add update indicator styles
+    document.head.insertAdjacentHTML('beforeend', updateStyles);
+    
+    // Add update indicator HTML
+    const indicator = document.createElement('div');
+    indicator.id = 'update-indicator';
+    indicator.className = 'update-indicator';
+    document.body.appendChild(indicator);
+    
+    // Initialize the price updater
+    // Change the path to match your JSON file location
+    window.priceUpdater = new PriceUpdater('/api/generator-prices.json');
+    
+    // Expose manual update function to console for testing
+    window.updatePrices = () => window.priceUpdater.forceUpdate();
+    
+    console.log('Price updater initialized. You can manually trigger updates by calling updatePrices() in the console.');
+});
+
+// Optional: Handle multiple products in a single JSON file
+// If your JSON file contains an array of products, the script will handle it automatically
+// If you need to handle multiple JSON files, you can extend the PriceUpdater class:
+
+/*
+class MultiFilePriceUpdater extends PriceUpdater {
+    constructor(jsonFilePaths = ['/api/generator-prices.json']) {
+        super();
+        this.jsonFilePaths = Array.isArray(jsonFilePaths) ? jsonFilePaths : [jsonFilePaths];
+    }
+
+    async fetchAndUpdatePrices() {
+        if (this.isUpdating) return;
+        this.isUpdating = true;
+        
+        try {
+            for (const filePath of this.jsonFilePaths) {
+                const response = await fetch(filePath, { cache: 'no-cache' });
+                const data = await response.json();
+                const products = Array.isArray(data) ? data : [data];
+                
+                products.forEach(product => this.updateProductPrice(product));
+            }
+            
+            this.updateTimestamp();
+            this.recalculatePricePerWatt();
+            
+        } catch (error) {
+            console.error('Error fetching prices:', error);
+            this.showUpdateError();
+        } finally {
+            this.isUpdating = false;
+        }
+    }
+}
+*/
+
 </body>
 </html>
