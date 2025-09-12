@@ -724,5 +724,62 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch the JSON data
+    fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/products.json')
+        .then(response => response.json())
+        .then(data => {
+            updatePrices(data);
+            // Update the timestamp and product count
+            document.getElementById('update-timestamp').textContent = new Date(data.last_updated).toLocaleString();
+        })
+        .catch(error => {
+            console.error('Error fetching product data:', error);
+        });
+
+    function updatePrices(data) {
+        const rows = document.querySelectorAll('#powerprices-body .generator');
+        let updatedCount = 0;
+        
+        rows.forEach(row => {
+            const linkElement = row.querySelector('td.name a');
+            if (!linkElement) return;
+            
+            const affiliateLink = linkElement.href;
+            const product = data.products.find(p => p.affiliate_link === affiliateLink);
+            
+            const priceTd = row.querySelector('td.price');
+            const pricePerWattTd = row.querySelector('td.price-per-watt');
+            
+            if (product && product.price_available) {
+                priceTd.textContent = product.price;
+                
+                // Calculate price per watt
+                const wattage = parseInt(row.dataset.wattage);
+                const priceValue = parseFloat(product.price.replace(/[^\d.]/g, ''));
+                
+                if (wattage > 0 && priceValue > 0) {
+                    const pricePerWatt = priceValue / wattage;
+                    pricePerWattTd.textContent = '$' + pricePerWatt.toFixed(3);
+                } else {
+                    pricePerWattTd.textContent = 'N/A';
+                }
+                
+                updatedCount++;
+            } else {
+                priceTd.textContent = 'Price unavailable';
+                pricePerWattTd.textContent = 'N/A';
+            }
+        });
+        
+        document.getElementById('product-count').textContent = updatedCount;
+    }
+    
+    // Keep your existing filter initialization code
+    init_filters();
+});
+</script>
+
 </body>
 </html>
