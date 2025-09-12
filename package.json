@@ -1,5 +1,5 @@
 {
-  "name": "static-generator-site",
+  "name": "generator-price-comparison",
   "version": "1.0.0",
   "description": "Static generator for price comparison site",
   "main": "generate-static.js",
