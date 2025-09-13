@@ -4,11 +4,33 @@ const path = require('path');
 
 async function generateStaticSite() {
     try {
+        console.log('🚀 Starting static site generation...');
+        
+        // Check if products.json exists
+        if (!fs.existsSync('products.json')) {
+            console.warn('⚠️ products.json not found, creating empty data structure');
+            const emptyData = {
+                products: [],
+                total_products: 0,
+                successful_prices: 0
+            };
+            fs.writeFileSync('products.json', JSON.stringify(emptyData, null, 2));
+        }
+        
+        // Check if template exists
+        if (!fs.existsSync('index-template.html')) {
+            console.error('❌ index-template.html not found');
+            console.log('📝 Please ensure you have renamed your index.html to index-template.html');
+            process.exit(1);
+        }
+        
         // Read the products JSON data
         const productsData = JSON.parse(fs.readFileSync('products.json', 'utf8'));
+        console.log(`📊 Loaded ${productsData.products?.length || 0} products from JSON`);
         
         // Read the HTML template
         let htmlTemplate = fs.readFileSync('index-template.html', 'utf8');
+        console.log('📄 Template loaded successfully');
         
         // Define your products with their data attributes
         const productRows = [
@@ -178,7 +200,7 @@ async function generateStaticSite() {
                 capacityDisplay: '2048Wh',
                 fuelTypeDisplay: 'Solar',
                 link: 'https://amzn.to/4nMYAaD',
-                name: 'GROWATT Portable Power Station ?INFINITY 2000 Black Electric Solar Generator?2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)'
+                name: 'GROWATT Portable Power Station ✓INFINITY 2000 Black Electric Solar Generator✓2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)'
             },
             {
                 key: 'litheli-portable-power-station-eclair-1000-1800w-s',
@@ -196,13 +218,15 @@ async function generateStaticSite() {
             }
         ];
         
+        console.log(`🏗️ Processing ${productRows.length} product rows...`);
+        
         // Generate rows with actual price data
         let tbodyHtml = '';
         let successfulPrices = 0;
         
         productRows.forEach(row => {
             // Find matching product in JSON data
-            const product = productsData.products.find(p => p.affiliate_link === row.link);
+            const product = productsData.products?.find(p => p.affiliate_link === row.link);
             
             let price = 'N/A';
             let pricePerWatt = 'N/A';
@@ -234,10 +258,17 @@ async function generateStaticSite() {
                     </tr>`;
         });
         
+        console.log(`💰 Found prices for ${successfulPrices} out of ${productRows.length} products`);
+        
         // Replace the tbody content in the template
         const tbodyRegex = /<tbody id="powerprices-body" lang="en">[\s\S]*?<\/tbody>/;
-        htmlTemplate = htmlTemplate.replace(tbodyRegex, `<tbody id="powerprices-body" lang="en">${tbodyHtml}
+        if (htmlTemplate.match(tbodyRegex)) {
+            htmlTemplate = htmlTemplate.replace(tbodyRegex, `<tbody id="powerprices-body" lang="en">${tbodyHtml}
                 </tbody>`);
+            console.log('✅ Updated tbody content');
+        } else {
+            console.warn('⚠️ Could not find tbody with id="powerprices-body" in template');
+        }
         
         // Update timestamp
         const now = new Date();
@@ -249,13 +280,16 @@ async function generateStaticSite() {
         
         // Update product count
         htmlTemplate = htmlTemplate.replace(
-            '<span id="product-count">10</span>',
+            /<span id="product-count">\d*<\/span>/,
             `<span id="product-count">${successfulPrices}</span>`
         );
         
         // Remove the dynamic price fetching script since prices are now static
         const scriptRegex = /<script>[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[\s\S]*?<\/script>/;
-        htmlTemplate = htmlTemplate.replace(scriptRegex, '');
+        if (htmlTemplate.match(scriptRegex)) {
+            htmlTemplate = htmlTemplate.replace(scriptRegex, '');
+            console.log('✅ Removed dynamic price fetching script');
+        }
         
         // Write the final HTML file
         fs.writeFileSync('index.html', htmlTemplate);
@@ -263,12 +297,25 @@ async function generateStaticSite() {
         console.log('✅ Static site generated successfully!');
         console.log(`📊 Updated ${successfulPrices} out of ${productRows.length} products with current prices`);
         console.log(`🕒 Last updated: ${timestamp}`);
+        console.log(`📄 Generated index.html (${fs.statSync('index.html').size} bytes)`);
+        
+        return {
+            success: true,
+            totalProducts: productRows.length,
+            successfulPrices: successfulPrices,
+            timestamp: timestamp
+        };
         
     } catch (error) {
         console.error('❌ Error generating static site:', error);
+        console.error('Stack trace:', error.stack);
         process.exit(1);
     }
 }
 
 // Run the generator
-generateStaticSite();
+if (require.main === module) {
+    generateStaticSite();
+}
+
+module.exports = generateStaticSite;
