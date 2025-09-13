@@ -284,11 +284,18 @@ async function generateStaticSite() {
             `<span id="product-count">${successfulPrices}</span>`
         );
         
-        // Remove the dynamic price fetching script since prices are now static
-        const scriptRegex = /<script>[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[\s\S]*?<\/script>/;
-        if (htmlTemplate.match(scriptRegex)) {
-            htmlTemplate = htmlTemplate.replace(scriptRegex, '');
+        // Remove only the dynamic price fetching script, preserve the filtering script
+        const dynamicScriptRegex = /<script>\s*document\.addEventListener\('DOMContentLoaded', function\(\) \{[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[\s\S]*?<\/script>/;
+        if (htmlTemplate.match(dynamicScriptRegex)) {
+            htmlTemplate = htmlTemplate.replace(dynamicScriptRegex, '');
             console.log('✅ Removed dynamic price fetching script');
+        } else {
+            // Fallback: look for the specific fetch script
+            const fetchScriptRegex = /<script>[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com\/Bernardkinuthia\/price-comparison-site\/main\/products\.json'\)[\s\S]*?<\/script>/;
+            if (htmlTemplate.match(fetchScriptRegex)) {
+                htmlTemplate = htmlTemplate.replace(fetchScriptRegex, '');
+                console.log('✅ Removed dynamic price fetching script (fallback)');
+            }
         }
         
         // Write the final HTML file
