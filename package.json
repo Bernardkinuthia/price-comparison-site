@@ -1,0 +1,16 @@
+{
+  "name": "price-comparison-site",
+  "version": "1.0.0",
+  "description": "Static site generator for generator price comparison",
+  "main": "generate-static-site.js",
+  "scripts": {
+    "build": "node generate-static-site.js",
+    "dev": "node generate-static-site.js && python -m http.server 8000",
+    "serve": "python -m http.server 8000"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": ["generators", "price-comparison", "static-site"],
+  "author": "Your Name",
+  "license": "MIT"
+}
