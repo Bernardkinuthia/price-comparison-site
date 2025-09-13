@@ -1,5 +1,4 @@
-name: Update Product Prices and HTML
-
+name: Update Product Prices and Generate Static Site
 on:
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
@@ -7,10 +6,16 @@ on:
   push:
     paths:
       - 'product_asin.csv'
+      - 'index-template.html'  # Also trigger when template changes
 
 jobs:
   update-prices:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     
     steps:
     - name: Checkout
@@ -23,7 +28,7 @@ jobs:
       with:
         python-version: '3.11'
         
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         pip install pandas requests beautifulsoup4
         
@@ -43,9 +48,16 @@ jobs:
       run: |
         python scraper.py
         
-    - name: Update HTML with prices
+    # NEW STEP: Generate static site instead of update_html.py
+    - name: Setup Node.js for static site generation
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Generate static HTML with updated prices
       run: |
-        python update_html.py
+        node generate-static-site.js
+        echo "✅ Static site generated with updated prices"
         
     - name: Commit results
       run: |
@@ -55,19 +67,32 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update prices and HTML via Amazon API $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git commit -m "🤖 Update prices and regenerate static site via Amazon API $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
         fi
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
         
     - name: Summary
       run: |
         if [ -f "products.json" ]; then
           echo "## 📊 API Update Summary" >> $GITHUB_STEP_SUMMARY
           echo "- **Data Source:** Amazon Product Advertising API" >> $GITHUB_STEP_SUMMARY
-          TOTAL=$(python -c "import json; print(json.load(open('products.json'))['total_products'])")
-          SUCCESS=$(python -c "import json; print(json.load(open('products.json'))['successful_prices'])")
+          TOTAL=$(python -c "import json; print(json.load(open('products.json'))['total_products'])" 2>/dev/null || echo "0")
+          SUCCESS=$(python -c "import json; print(json.load(open('products.json'))['successful_prices'])" 2>/dev/null || echo "0")
           echo "- **Total products:** $TOTAL" >> $GITHUB_STEP_SUMMARY
           echo "- **Successful prices:** $SUCCESS" >> $GITHUB_STEP_SUMMARY
           echo "- **Success rate:** $(python -c "print(f'{$SUCCESS/$TOTAL*100:.1f}%')" 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Static site generated:** ✅" >> $GITHUB_STEP_SUMMARY
           echo "- **Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
         fi
