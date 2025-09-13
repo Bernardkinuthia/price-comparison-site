@@ -1,12 +1,18 @@
 name: Update Product Prices and Generate Static Site
+
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours (FIXED: removed extra asterisk)
+    - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:  # Manual trigger
   push:
     paths:
       - 'product_asin.csv'
-      - 'index-template.html'  # Also trigger when template changes
+      - 'index-template.html'
+
+# Add environment for GitHub Pages
+environment:
+  name: github-pages
+  url: ${{ steps.deployment.outputs.page_url }}
 
 jobs:
   update-prices:
@@ -40,12 +46,6 @@ jobs:
           exit 1
         fi
         echo "✅ CSV file found"
-        
-        if [ ! -f "index-template.html" ]; then
-          echo "❌ index-template.html not found"
-          exit 1
-        fi
-        echo "✅ Template file found"
         
         if [ ! -f "generate-static-site.js" ]; then
           echo "❌ generate-static-site.js not found"
@@ -93,7 +93,10 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add products.json index.html
+        git add products.json
+        if [ -f "index.html" ]; then
+          git add index.html
+        fi
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
@@ -107,6 +110,7 @@ jobs:
     - name: Upload to GitHub Pages
       uses: actions/upload-pages-artifact@v3
       with:
+        # Upload only the generated index.html and necessary assets
         path: '.'
         
     - name: Deploy to GitHub Pages
@@ -129,5 +133,6 @@ jobs:
           fi
           echo "- **Success rate:** $RATE" >> $GITHUB_STEP_SUMMARY
           echo "- **Static site generated:** ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Pages URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
         fi
