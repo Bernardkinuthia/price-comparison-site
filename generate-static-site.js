@@ -215,6 +215,62 @@ async function generateStaticSite() {
                 fuelTypeDisplay: 'Solar',
                 link: 'https://amzn.to/4n88zY8',
                 name: 'Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)'
+            },
+            {
+                key: 'vtoman-flashspeed-1000-828wh',
+                productType: 'medium_wattage',
+                condition: 'new',
+                capacity: '828',
+                wattage: '1000',
+                fuelType: 'solar',
+                engineType: 'electric',
+                brand: 'other_brand',
+                capacityDisplay: '828Wh',
+                fuelTypeDisplay: 'Solar',
+                link: 'https://amzn.to/3Ibm1Ly',
+                name: 'VTOMAN FlashSpeed 1000 Portable Power Station with 110W Solar Panel - 828Wh/1000W(2000W Peak) Solar Generator with LiFePO4 Battery, 100W USB-C, 60 Min Fast Charging 0-80% for Camping, Backup, RV'
+            },
+            {
+                key: 'litheli-eclair-1000-1069wh',
+                productType: 'large_wattage',
+                condition: 'new',
+                capacity: '1069',
+                wattage: '1800',
+                fuelType: 'solar',
+                engineType: 'electric',
+                brand: 'other_brand',
+                capacityDisplay: '1069Wh',
+                fuelTypeDisplay: 'Solar',
+                link: 'https://amzn.to/4n88zY8',
+                name: 'Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)'
+            },
+            {
+                key: 'ampace-andes-300-266wh',
+                productType: 'small_wattage',
+                condition: 'new',
+                capacity: '266',
+                wattage: '300',
+                fuelType: 'solar',
+                engineType: 'electric',
+                brand: 'other_brand',
+                capacityDisplay: '266Wh',
+                fuelTypeDisplay: 'Solar',
+                link: 'https://amzn.to/4n2c1U1',
+                name: 'AMPACE Portable Power Station Andes 300, 266Wh Battery with 300W AC/100W USB-C Output, 1Hr Fast Charging, 8.2lbs Solar Generator for RV, Outdoors, Camping batteries, Traveling, (Solar Panel Optional)'
+            },
+            {
+                key: 'growatt-infinity-2000-2048wh',
+                productType: 'large_wattage',
+                condition: 'new',
+                capacity: '2048',
+                wattage: '2400',
+                fuelType: 'solar',
+                engineType: 'electric',
+                brand: 'other_brand',
+                capacityDisplay: '2048Wh',
+                fuelTypeDisplay: 'Solar',
+                link: 'https://amzn.to/4nMYAaD',
+                name: 'GROWATT Portable Power Station ，INFINITY 2000 Black Electric Solar Generator，2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)'
             }
         ];
         
