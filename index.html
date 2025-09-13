@@ -538,6 +538,148 @@
 </div>
 </div>
 </div>
+<script>
+// Minimal JavaScript for filtering functionality
+var f = document.getElementById('filters');
+
+function get_filters() {
+    var filters = {
+        category: {},
+        condition: {},
+        fuel_type: {},
+        engine_type: {},
+        brand: {},
+        wattage_min: 0,
+        wattage_max: null,
+        capacity_min: 0,
+        capacity_max: null
+    };
+
+    f.querySelectorAll('.product_type input').forEach(function(checkbox) {
+        if(!filters.category[checkbox.dataset.category]) {
+            filters.category[checkbox.dataset.category] = {};
+        }
+        filters.category[checkbox.dataset.category][checkbox.dataset.productType] = checkbox.checked;
+    });
+
+    f.querySelectorAll('.condition input').forEach(function(checkbox) {
+        filters.condition[checkbox.dataset.condition] = checkbox.checked;
+    });
+
+    f.querySelectorAll('.fuel_type input').forEach(function(checkbox) {
+        filters.fuel_type[checkbox.dataset.fuelType] = checkbox.checked;
+    });
+
+    f.querySelectorAll('.engine_type input').forEach(function(checkbox) {
+        filters.engine_type[checkbox.dataset.engineType] = checkbox.checked;
+    });
+
+    f.querySelectorAll('.brand input').forEach(function(checkbox) {
+        filters.brand[checkbox.dataset.brand] = checkbox.checked;
+    });
+
+    var wattage_min = f.querySelector('#wattage_min');
+    if(wattage_min && wattage_min.value) {
+        filters.wattage_min = Number(wattage_min.value);
+    }
+
+    var wattage_max = f.querySelector('#wattage_max');
+    if(wattage_max && wattage_max.value) {
+        filters.wattage_max = Number(wattage_max.value);
+    }
+
+    var capacity_min = f.querySelector('#capacity_min');
+    if(capacity_min && capacity_min.value) {
+        filters.capacity_min = Number(capacity_min.value);
+    }
+
+    var capacity_max = f.querySelector('#capacity_max');
+    if(capacity_max && capacity_max.value) {
+        filters.capacity_max = Number(capacity_max.value);
+    }
+
+    return filters;
+}
+
+function apply_filters() {
+    var filters = get_filters();
+    var rows = document.querySelectorAll('#powerprices-body .generator');
+    
+    rows.forEach(function(row) {
+        var show = true;
+        
+        var condition = row.dataset.condition;
+        if(!filters.condition[condition]) {
+            show = false;
+        }
+        
+        var productType = row.dataset.productType;
+        if(filters.category.generator && !filters.category.generator[productType]) {
+            show = false;
+        }
+        
+        var fuelType = row.dataset.fuelType;
+        if(!filters.fuel_type[fuelType]) {
+            show = false;
+        }
+        
+        var engineType = row.dataset.engineType;
+        if(!filters.engine_type[engineType]) {
+            show = false;
+        }
+        
+        var brand = row.dataset.brand;
+        if(!filters.brand[brand]) {
+            show = false;
+        }
+        
+        var wattage = Number(row.dataset.wattage);
+        if(wattage < filters.wattage_min) {
+            show = false;
+        }
+        if(filters.wattage_max && wattage > filters.wattage_max) {
+            show = false;
+        }
+        
+        var capacity = Number(row.dataset.capacity);
+        if(capacity < filters.capacity_min) {
+            show = false;
+        }
+        if(filters.capacity_max && capacity > filters.capacity_max) {
+            show = false;
+        }
+        
+        if(show) {
+            row.classList.remove('filtered-out');
+        } else {
+            row.classList.add('filtered-out');
+        }
+    });
+}
+
+function init_filters() {
+    f.addEventListener('change', function(e) {
+        if(e.target.type === 'checkbox' || e.target.type === 'radio') {
+            apply_filters();
+        }
+    });
+    
+    f.addEventListener('input', function(e) {
+        if(e.target.type === 'number') {
+            apply_filters();
+        }
+    });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    init_filters();
+    
+    // Set current timestamp
+    var now = new Date();
+    document.getElementById('update-timestamp').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+});
+</script>
 
 </body>
 </html>
