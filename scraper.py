@@ -176,7 +176,7 @@ class AmazonProductFetcher:
                         'price': price,
                         'currency': currency,
                         'features': features,
-                        'last_updated': datetime.now().isoformat(),
+                        'last_updated': datetime.utcnow().isoformat() + 'Z',
                         'price_available': price is not None,
                         'api_source': True
                     }
@@ -200,7 +200,7 @@ class AmazonProductFetcher:
                     'price': None,
                     'currency': '$',
                     'features': [],
-                    'last_updated': datetime.now().isoformat(),
+                    'last_updated': datetime.utcnow().isoformat() + 'Z',
                     'price_available': False,
                     'api_source': True,
                     'error': error.get('Message', 'Unknown error')
@@ -277,7 +277,7 @@ class AmazonProductFetcher:
                         'price': None,
                         'currency': '$',
                         'features': [],
-                        'last_updated': datetime.now().isoformat(),
+                        'last_updated': datetime.utcnow().isoformat() + 'Z',
                         'price_available': False,
                         'api_source': True,
                         'error': 'API request failed'
@@ -297,7 +297,7 @@ class AmazonProductFetcher:
         # Save to JSON
         try:
             output_data = {
-                'last_updated': datetime.now().isoformat(),
+                'last_updated': datetime.utcnow().isoformat() + 'Z',  # UTC timestamp with Z suffix
                 'total_products': len(all_products),
                 'successful_prices': successful,
                 'api_used': True,
