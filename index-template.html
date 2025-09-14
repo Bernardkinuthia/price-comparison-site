@@ -684,10 +684,7 @@ function init_filters() {
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     init_filters();
-    
-    // Set current timestamp
-    var now = new Date();
-    document.getElementById('update-timestamp').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+    // Timestamp will be set from JSON data or hardcoded by static generator
 });
 </script>
 <script>
