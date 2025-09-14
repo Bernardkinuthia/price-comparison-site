@@ -105,7 +105,7 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Auto-update prices and site: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git commit -m "Auto-update prices and site: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           git push
         fi
         
