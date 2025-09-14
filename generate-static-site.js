@@ -326,11 +326,19 @@ async function generateStaticSite() {
             console.warn('⚠️ Could not find tbody with id="powerprices-body" in template');
         }
         
-        // Update timestamp
-        const now = new Date();
-        const timestamp = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+        // Update timestamp from JSON data (actual price update time)
+        let timestamp = 'Unknown';
+        if (productsData.last_updated) {
+            const updateTime = new Date(productsData.last_updated);
+            timestamp = updateTime.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        } else {
+            // Fallback to current time if no timestamp in JSON
+            const now = new Date();
+            timestamp = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        }
+
         htmlTemplate = htmlTemplate.replace(
-            '<span id="update-timestamp"></span>',
+            /<span id="update-timestamp">.*?<\/span>/,
             `<span id="update-timestamp">${timestamp}</span>`
         );
         
