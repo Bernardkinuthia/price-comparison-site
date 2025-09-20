@@ -1,5 +1,6 @@
 running_wattage,starting_wattage,capacity,run_time,fuel_type,weight,link_text,affiliate_link,asin
 300,600,280,9,Solar,5.1,"ZeroKor Portable Solar Generator, 300W Portable Power Station with Foldable 60W Solar Panel, 110V Pure Sine Wave 280Wh Lithium Battery Pack with USB DC AC Outlet for Home Use RV Van Outdoor Camping-Orange",https://amzn.to/4nxMSjE,B0CQQKSQ3H
-800,1600,768Wh,1.10 hrs,Solar,18.18 lbs,"EF ECOFLOW Portable Power Station RIVER 2 Pro, 768Wh LiFePO4 Battery, 70 Min Fast Charging, 4X800W (X-Boost 1600W) AC Outlets, Solar Generator for Outdoor Camping/RVs/Home Use Black",https://amzn.to/47D9dI1,B0BVLPGS79
-1000,2000,768Wh,46 min,Battery,22.5 lbs,"BLUETTI Solar Generator AC70, 768Wh LiFePO4 Battery Backup w/ 2 1000W AC Outlets (Power Lifting 2000W), 100W Type-C, for Road Trip, Off-grid, Power Outage (Solar Panel Optional)",https://amzn.to/3Keq1LE,B0CLG6FYLQ
+800,1600,768,1.10,Solar,18.18,"EF ECOFLOW Portable Power Station RIVER 2 Pro, 768Wh LiFePO4 Battery, 70 Min Fast Charging, 4X800W (X-Boost 1600W) AC Outlets, Solar Generator for Outdoor Camping/RVs/Home Use Black",https://amzn.to/47D9dI1,B0BVLPGS79
+1000,2000,768,0.46,Battery,22.5,"BLUETTI Solar Generator AC70, 768Wh LiFePO4 Battery Backup w/ 2 1000W AC Outlets (Power Lifting 2000W), 100W Type-C, for Road Trip, Off-grid, Power Outage (Solar Panel Optional)",https://amzn.to/3Keq1LE,B0CLG6FYLQ
+
 
