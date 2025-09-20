@@ -1,5 +1,19 @@
 [
   {
+    "asin": "B0CQQKSQ3H",
+    "running_wattage": "300",
+    "starting_wattage": "600",
+    "capacity": "280",
+    "run_time": "9.0",
+    "fuel_type": "Solar",
+    "weight": "5.1",
+    "link_text": "ZeroKor Portable Solar Generator, 300W Portable Power Station with Foldable 60W Solar Panel, 110V Pure Sine Wave 280Wh Lithium Battery Pack with USB DC AC Outlet for Home Use RV Van Outdoor Camping-Orange",
+    "affiliate_link": "https://amzn.to/4nxMSjE",
+    "price": "$129.98",
+    "price_amount": 129.98,
+    "timestamp": "2025-09-20T14:02:04.960255"
+  },
+  {
     "asin": "B0CLG6FYLQ",
     "running_wattage": "1000",
     "starting_wattage": "2000",
@@ -11,7 +25,7 @@
     "affiliate_link": "https://amzn.to/3Keq1LE",
     "price": "$369.00",
     "price_amount": 369.0,
-    "timestamp": "2025-09-20T13:53:30.174961"
+    "timestamp": "2025-09-20T14:02:16.381762"
   },
   {
     "asin": "B0BVLPGS79",
@@ -25,20 +39,6 @@
     "affiliate_link": "https://amzn.to/47D9dI1",
     "price": "$379.00",
     "price_amount": 379.0,
-    "timestamp": "2025-09-20T13:53:24.060583"
-  },
-  {
-    "asin": "B0CQQKSQ3H",
-    "running_wattage": "300",
-    "starting_wattage": "600",
-    "capacity": "280",
-    "run_time": "9.0",
-    "fuel_type": "Solar",
-    "weight": "5.1",
-    "link_text": "ZeroKor Portable Solar Generator, 300W Portable Power Station with Foldable 60W Solar Panel, 110V Pure Sine Wave 280Wh Lithium Battery Pack with USB DC AC Outlet for Home Use RV Van Outdoor Camping-Orange",
-    "affiliate_link": "https://amzn.to/4nxMSjE",
-    "price": null,
-    "price_amount": null,
-    "timestamp": "2025-09-20T13:53:18.095548"
+    "timestamp": "2025-09-20T14:02:09.507637"
   }
 ]
