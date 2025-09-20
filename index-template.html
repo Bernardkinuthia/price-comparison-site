@@ -597,27 +597,9 @@ function apply_filters() {
         }
         
         var brand = row.dataset.brand;
-		var brandMatched = false;
-
-		// Check if it's a listed brand
-		var listedBrands = ['honda', 'yamaha', 'generac', 'champion', 'westinghouse', 'zerokor', 'ef_ecoflow', 'bluetti', 'jackery', 'anker', 'marbero', 'oupes', 'grecell', 'allwei', 'allpowers', 'pecron'];
-
-		if (listedBrands.includes(brand)) {
-			// It's a listed brand, check if that specific brand filter is enabled
-			if (filters.brand[brand]) {
-				brandMatched = true;
-			}
-		} else {
-			// It's an "other" brand, check if "other_brand" filter is enabled
-			if (filters.brand['other_brand']) {
-				brandMatched = true;
-			}
-		}
-
-		if (!brandMatched) {
-			show = false;
-		}
-        
+        if(!filters.brand[brand]) {
+            show = false;
+        }
         
         var runningWattage = Number(row.dataset.runningWattage);
         if(runningWattage < filters.running_wattage_min) {
