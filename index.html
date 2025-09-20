@@ -289,7 +289,7 @@
 <!-- 
     This page was statically generated with EcommerceAPI data.
     All prices are embedded directly in the HTML for optimal performance.
-    Last updated: 2025-09-20 14:02:16 UTC
+    Last updated: 2025-09-20 14:09:21 UTC
 -->
 </head>
 <body>
@@ -515,7 +515,7 @@
                 border-top: 1px solid #ddd;
                 margin-bottom: 20px;
             ">
-                Last updated: <span id="update-timestamp">2025-09-20 14:02:16 UTC</span> | Showing <span id="product-count">3</span> products
+                Last updated: <span id="update-timestamp">2025-09-20 14:09:21 UTC</span> | Showing <span id="product-count">3</span> products
             </p>
 <div style="text-align: center; padding: 15px; border-top: 1px solid #eee;">
 <a href="/faq.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">FAQ</a> | 
@@ -634,9 +634,27 @@ function apply_filters() {
         }
         
         var brand = row.dataset.brand;
-        if(!filters.brand[brand]) {
-            show = false;
-        }
+		var brandMatched = false;
+
+		// Check if it's a listed brand
+		var listedBrands = ['honda', 'yamaha', 'generac', 'champion', 'westinghouse', 'zerokor', 'ef_ecoflow', 'bluetti', 'jackery', 'anker', 'marbero', 'oupes', 'grecell', 'allwei', 'allpowers', 'pecron'];
+
+		if (listedBrands.includes(brand)) {
+			// It's a listed brand, check if that specific brand filter is enabled
+			if (filters.brand[brand]) {
+				brandMatched = true;
+			}
+		} else {
+			// It's an "other" brand, check if "other_brand" filter is enabled
+			if (filters.brand['other_brand']) {
+				brandMatched = true;
+			}
+		}
+
+		if (!brandMatched) {
+			show = false;
+		}
+        
         
         var runningWattage = Number(row.dataset.runningWattage);
         if(runningWattage < filters.running_wattage_min) {
