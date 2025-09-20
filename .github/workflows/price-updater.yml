@@ -1,0 +1,182 @@
+name: Update Product Prices and Generate Static Site
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Fixed cron syntax - every 6 hours
+  workflow_dispatch:
+  push:
+    paths:
+      - 'product_asin.csv'
+      - 'index-template.html'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Python dependencies
+      run: |
+        pip install pandas requests
+        
+    - name: Verify required files
+      run: |
+        echo "Checking for required files..."
+        ls -la
+        if [ ! -f "product_asin.csv" ]; then
+          echo "Warning: product_asin.csv file not found"
+        else
+          echo "✅ Found product_asin.csv"
+          head -5 product_asin.csv
+        fi
+        if [ ! -f "generate-static-site.js" ]; then
+          echo "Error: generate-static-site.js not found"
+          exit 1
+        fi
+        if [ ! -f "scraper.py" ]; then
+          echo "Error: scraper.py not found"
+          exit 1
+        fi
+        
+    - name: Run ecommerce API price fetcher
+      env:
+        ECOMMERCE_API_KEY: ${{ secrets.ECOMMERCE_API_KEY }}
+      run: |
+        echo "🚀 Starting price fetch with ecommerce API..."
+        python scraper.py || {
+          echo "❌ Scraper failed, checking for existing data..."
+          if [ ! -f "products.json" ]; then
+            echo "No existing data found, creating empty structure"
+            echo '[]' > products.json
+          else
+            echo "Using existing products.json data"
+          fi
+        }
+        
+    - name: Verify products data
+      run: |
+        if [ -f "products.json" ]; then
+          echo "✅ Products data exists"
+          echo "File size: $(wc -c < products.json) bytes"
+          echo "Products structure preview:"
+          head -10 products.json
+          PRODUCT_COUNT=$(python -c "
+import json
+try:
+    with open('products.json', 'r') as f:
+        data = json.load(f)
+    if isinstance(data, list):
+        total = len(data)
+        with_prices = len([p for p in data if p.get('price')])
+        print(f'Total: {total}, With prices: {with_prices}')
+    else:
+        print('Unexpected JSON structure')
+except Exception as e:
+    print(f'Error reading JSON: {e}')
+" 2>/dev/null || echo "Could not analyze products data")
+          echo "Product analysis: $PRODUCT_COUNT"
+        else
+          echo "⚠️ No products.json found after scraping"
+        fi
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Create fallback data if needed
+      run: |
+        if [ ! -f "products.json" ]; then
+          echo "Creating fallback products.json with empty array structure"
+          echo '[]' > products.json
+        fi
+        
+    - name: Generate static HTML
+      run: |
+        echo "🏗️ Generating static HTML site..."
+        node generate-static-site.js
+        
+    - name: Verify generated files
+      run: |
+        if [ ! -f "index.html" ]; then
+          echo "Error: index.html was not generated"
+          exit 1
+        fi
+        echo "✅ Generated files successfully:"
+        ls -la *.html *.json
+        echo "index.html size: $(wc -c < index.html) bytes"
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+        
+    - name: Commit updated files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add the updated products data
+        if [ -f "products.json" ]; then
+          git add products.json
+        fi
+        
+        # Add the generated HTML
+        if [ -f "index.html" ]; then
+          git add index.html
+        fi
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto-update prices and site: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          git push
+        fi
+        
+    - name: Summary
+      run: |
+        echo "✅ Deployment completed successfully"
+        echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
+        if [ -f "products.json" ]; then
+          PRICE_SUMMARY=$(python -c "
+import json
+try:
+    with open('products.json', 'r') as f:
+        data = json.load(f)
+    if isinstance(data, list):
+        total = len(data)
+        with_prices = len([p for p in data if p.get('price')])
+        print(f'{with_prices}/{total}')
+    else:
+        print('Unknown')
+except:
+    print('Error')
+" 2>/dev/null || echo "Unknown")
+          echo "💰 Products with prices: $PRICE_SUMMARY"
+        fi
