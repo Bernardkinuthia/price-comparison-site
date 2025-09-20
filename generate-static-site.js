@@ -45,6 +45,70 @@ async function generateStaticSite() {
         let htmlTemplate = fs.readFileSync('index-template.html', 'utf8');
         console.log('✅ Template loaded successfully');
         
+        // Helper function to determine product type based on wattage
+        function getProductType(runningWattage) {
+            const watts = parseFloat(runningWattage) || 0;
+            if (watts <= 500) return 'small_wattage';
+            if (watts <= 1500) return 'medium_wattage';
+            return 'large_wattage';
+        }
+        
+        // Helper function to normalize brand names
+        function normalizeBrand(brandName) {
+            if (!brandName) return 'other_brand';
+            
+            const brand = brandName.toLowerCase().trim();
+            
+            // Map common brand variations to your filter values
+            const brandMap = {
+                'honda': 'honda',
+                'yamaha': 'yamaha',
+                'generac': 'generac',
+                'champion': 'champion',
+                'westinghouse': 'westinghouse',
+                'zerokor': 'zerokor',
+                'ef ecoflow': 'ef_ecoflow',
+                'ecoflow': 'ef_ecoflow',
+                'bluetti': 'bulleti',
+                'bulleti': 'bulleti',
+                'jackery': 'jackery',
+                'anker': 'anker',
+                'marbero': 'marbero',
+                'oupes': 'oupes',
+                'grecell': 'grecell',
+                'allwei': 'allwei',
+                'allpowers': 'allpowers',
+                'pecron': 'pecron',
+                'dji': 'other_brand',
+                'litheli': 'other_brand'
+            };
+            
+            return brandMap[brand] || 'other_brand';
+        }
+        
+        // Helper function to normalize fuel type
+        function normalizeFuelType(fuelType) {
+            if (!fuelType) return 'gasoline';
+            
+            const fuel = fuelType.toLowerCase().trim();
+            
+            const fuelMap = {
+                'gasoline': 'gasoline',
+                'gas': 'gasoline',
+                'diesel': 'diesel',
+                'propane': 'propane',
+                'dual fuel': 'dual_fuel',
+                'dual-fuel': 'dual_fuel',
+                'tri fuel': 'tri_fuel',
+                'tri-fuel': 'tri_fuel',
+                'solar': 'solar',
+                'battery': 'battery',
+                'electric': 'battery'
+            };
+            
+            return fuelMap[fuel] || 'gasoline';
+        }
+        
         // Generate table rows
         let tbodyHtml = '';
         let successfulPrices = 0;
@@ -95,25 +159,43 @@ async function generateStaticSite() {
             const runningWatts = product.running_wattage || 'N/A';
             const startingWatts = product.starting_wattage || 'N/A';
             const runTime = product.run_time || 'N/A';
-            const fuelType = product.fuel_type || 'N/A';
+            const fuelType = product.fuel_type || 'gasoline';
             const capacity = product.capacity || 'N/A';
             const weight = product.weight || 'N/A';
             const linkText = product.link_text || 'View Product';
             const affiliateLink = product.affiliate_link || '#';
             const productKey = product.asin || `product-${index}`;
+            const brand = product.brand || 'Unknown';
+            const condition = product.condition || 'new'; // Default to 'new'
             
-            // Generate table row with clickable affiliate link
+            // Normalize data for filters
+            const normalizedBrand = normalizeBrand(brand);
+            const normalizedFuelType = normalizeFuelType(fuelType);
+            const productType = getProductType(runningWatts);
+            
+            // Generate table row with ALL required data attributes for filtering
             tbodyHtml += `
-                    <tr class="generator" data-product-key="${productKey}" data-running-wattage="${runningWatts}" data-starting-wattage="${startingWatts}" data-capacity="${capacity}" data-fuel-type="${fuelType}" data-weight="${weight}" data-price="${dataPrice}">
+                    <tr class="generator" 
+                        data-product-key="${productKey}" 
+                        data-running-wattage="${runningWatts}" 
+                        data-starting-wattage="${startingWatts}" 
+                        data-capacity="${capacity}" 
+                        data-fuel-type="${normalizedFuelType}" 
+                        data-weight="${weight}" 
+                        data-price="${dataPrice}"
+                        data-brand="${normalizedBrand}"
+                        data-condition="${condition}"
+                        data-product-type="${productType}"
+                        data-run-time="${runTime}">
                         <td class="price">${price}</td>
                         <td class="price-per-watt">${pricePerWatt}</td>
-                        <td class="running-watts">${runningWatts}</td>
-                        <td class="starting-watts">${startingWatts}</td>
-                        <td class="run-time">${runTime}</td>
-                        <td class="fuel-type">${fuelType}</td>
-                        <td class="capacity">${capacity}</td>
-                        <td class="weight">${weight}</td>
-                        <td class="affiliate-link"><a href="${affiliateLink}" target="_blank" rel="noopener noreferrer nofollow">${linkText}</a></td>
+                        <td>${runningWatts}</td>
+                        <td>${startingWatts}</td>
+                        <td>${runTime}</td>
+                        <td>${fuelType}</td>
+                        <td>${capacity}</td>
+                        <td>${weight}</td>
+                        <td class="name"><a href="${affiliateLink}" target="_blank" rel="noopener noreferrer">${linkText}</a></td>
                     </tr>`;
         });
         
@@ -236,7 +318,7 @@ async function generateStaticSite() {
                 );
                 
                 fs.writeFileSync('index.html', fallbackHtml);
-                console.log('🔄 Created fallback index.html');
+                console.log('📄 Created fallback index.html');
             }
         } catch (fallbackError) {
             console.error('Failed to create fallback HTML:', fallbackError.message);
