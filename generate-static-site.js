@@ -3,88 +3,95 @@ const path = require('path');
 
 async function generateStaticSite() {
     try {
-        console.log('Starting static site generation...');
+        console.log('🚀 Starting static site generation...');
         
-        // Check if products.json exists
-        if (!fs.existsSync('products.json')) {
-            console.warn('products.json not found, creating empty data structure');
-            const emptyData = [];
-            fs.writeFileSync('products.json', JSON.stringify(emptyData, null, 2));
+        // Ensure products.json exists with fallback
+        let productsData = [];
+        if (fs.existsSync('products.json')) {
+            try {
+                const rawData = fs.readFileSync('products.json', 'utf8');
+                if (rawData.trim()) {
+                    productsData = JSON.parse(rawData);
+                    if (!Array.isArray(productsData)) {
+                        console.warn('products.json is not an array, converting to empty array');
+                        productsData = [];
+                    }
+                } else {
+                    console.warn('products.json is empty, using empty array');
+                    productsData = [];
+                }
+            } catch (parseError) {
+                console.error('Error parsing products.json:', parseError.message);
+                console.log('Creating empty products array as fallback');
+                productsData = [];
+            }
+        } else {
+            console.warn('products.json not found, creating empty array');
+            productsData = [];
+            // Create empty file for future runs
+            fs.writeFileSync('products.json', JSON.stringify([], null, 2));
         }
         
-        // Check if template exists
+        console.log(`📦 Loaded ${productsData.length} products from JSON`);
+        
+        // Check template file
         if (!fs.existsSync('index-template.html')) {
-            console.error('index-template.html not found');
+            console.error('❌ index-template.html not found');
             console.log('Please ensure you have renamed your index.html to index-template.html');
             process.exit(1);
         }
         
-        // Read the products JSON data (expecting array format)
-        const productsData = JSON.parse(fs.readFileSync('products.json', 'utf8'));
-        console.log(`Loaded ${productsData.length || 0} products from JSON`);
-        
-        // Display sample product structure for debugging
-        if (productsData.length > 0) {
-            console.log('Sample product structure:');
-            const sample = productsData[0];
-            Object.keys(sample).forEach(key => {
-                console.log(`  ${key}: ${sample[key]}`);
-            });
-        }
-        
-        // Read the HTML template
+        // Read HTML template
         let htmlTemplate = fs.readFileSync('index-template.html', 'utf8');
-        console.log('Template loaded successfully');
+        console.log('✅ Template loaded successfully');
         
-        console.log(`Processing ${productsData.length} products from scraper output...`);
-        
-        // Generate rows with actual price data from the scraper structure
+        // Generate table rows
         let tbodyHtml = '';
         let successfulPrices = 0;
         
-        // Process products directly from the JSON array (scraper output structure)
         productsData.forEach((product, index) => {
-            if (!product) return;
+            if (!product || typeof product !== 'object') {
+                console.warn(`Skipping invalid product at index ${index}`);
+                return;
+            }
             
+            // Extract and clean price data
             let price = 'N/A';
             let pricePerWatt = 'N/A';
             let dataPrice = '0';
             
-            // Extract price from scraper structure
             if (product.price) {
                 let priceValue = 0;
+                
                 if (typeof product.price === 'string') {
-                    // If price is a string like $123.45, extract the number
                     priceValue = parseFloat(product.price.replace(/[^\d.]/g, ''));
-                    price = product.price.startsWith('$') ? product.price : '$' + priceValue.toFixed(2);
+                    price = product.price.startsWith('$') ? product.price : `$${priceValue.toFixed(2)}`;
                 } else if (typeof product.price === 'number') {
-                    // If price is already a number
                     priceValue = product.price;
-                    price = '$' + priceValue.toFixed(2);
+                    price = `$${priceValue.toFixed(2)}`;
                 } else if (product.price_amount && typeof product.price_amount === 'number') {
-                    // Fallback to price_amount if available
                     priceValue = product.price_amount;
-                    price = '$' + priceValue.toFixed(2);
+                    price = `$${priceValue.toFixed(2)}`;
                 }
                 
                 if (priceValue > 0) {
-                    // Calculate price per watt using running_wattage
-                    const runningWattage = parseFloat(product.running_wattage);
-                    if (runningWattage && runningWattage > 0) {
+                    // Calculate price per watt
+                    const runningWattage = parseFloat(product.running_wattage || 0);
+                    if (runningWattage > 0) {
                         const pricePerWattValue = priceValue / runningWattage;
-                        pricePerWatt = '$' + pricePerWattValue.toFixed(3);
+                        pricePerWatt = `$${pricePerWattValue.toFixed(3)}`;
                     }
                     dataPrice = priceValue.toString();
                     successfulPrices++;
-                    console.log(`Success ${product.asin || index}: ${price}`);
+                    console.log(`✅ ${product.asin || `Product ${index + 1}`}: ${price}`);
                 } else {
-                    console.log(`Warning ${product.asin || index}: Invalid price value - ${product.price}`);
+                    console.log(`⚠️  ${product.asin || `Product ${index + 1}`}: Invalid price value`);
                 }
             } else {
-                console.log(`No price ${product.asin || index}: No price data found`);
+                console.log(`❌ ${product.asin || `Product ${index + 1}`}: No price data`);
             }
             
-            // Clean and format the data from scraper output
+            // Clean and format product data with fallbacks
             const runningWatts = product.running_wattage || 'N/A';
             const startingWatts = product.starting_wattage || 'N/A';
             const runTime = product.run_time || 'N/A';
@@ -93,10 +100,9 @@ async function generateStaticSite() {
             const weight = product.weight || 'N/A';
             const linkText = product.link_text || 'View Product';
             const affiliateLink = product.affiliate_link || '#';
-            
-            // Generate unique key for data attributes
             const productKey = product.asin || `product-${index}`;
             
+            // Generate table row with clickable affiliate link
             tbodyHtml += `
                     <tr class="generator" data-product-key="${productKey}" data-running-wattage="${runningWatts}" data-starting-wattage="${startingWatts}" data-capacity="${capacity}" data-fuel-type="${fuelType}" data-weight="${weight}" data-price="${dataPrice}">
                         <td class="price">${price}</td>
@@ -107,34 +113,37 @@ async function generateStaticSite() {
                         <td class="fuel-type">${fuelType}</td>
                         <td class="capacity">${capacity}</td>
                         <td class="weight">${weight}</td>
-                        <td class="affiliate-link"><a href="${affiliateLink}" target="_blank" rel="noopener noreferrer">${linkText}</a></td>
+                        <td class="affiliate-link"><a href="${affiliateLink}" target="_blank" rel="noopener noreferrer nofollow">${linkText}</a></td>
                     </tr>`;
         });
         
-        console.log(`Found prices for ${successfulPrices} out of ${productsData.length} products`);
+        console.log(`💰 Found prices for ${successfulPrices} out of ${productsData.length} products`);
         
-        // Replace the tbody content in the template
+        // Update tbody content in template
         const tbodyRegex = /<tbody id="powerprices-body" lang="en">[\s\S]*?<\/tbody>/;
         if (htmlTemplate.match(tbodyRegex)) {
-            htmlTemplate = htmlTemplate.replace(tbodyRegex, `<tbody id="powerprices-body" lang="en">${tbodyHtml}
+            htmlTemplate = htmlTemplate.replace(tbodyRegex, 
+                `<tbody id="powerprices-body" lang="en">${tbodyHtml}
                 </tbody>`);
-            console.log('Updated tbody content');
+            console.log('✅ Updated tbody content');
         } else {
-            console.warn('Could not find tbody with id="powerprices-body" in template');
+            console.warn('⚠️  Could not find tbody with id="powerprices-body" in template');
         }
         
-        // Update timestamp - try to get from first product that has one, or use current time
-        let timestamp = 'Unknown';
-        const productWithTimestamp = productsData.find(p => p.timestamp || p.last_updated);
+        // Update timestamp
+        let timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        
+        // Try to get timestamp from most recent product
+        const productWithTimestamp = productsData
+            .filter(p => p && (p.timestamp || p.last_updated))
+            .sort((a, b) => new Date(b.timestamp || b.last_updated) - new Date(a.timestamp || a.last_updated))[0];
+            
         if (productWithTimestamp) {
             const updateTime = new Date(productWithTimestamp.timestamp || productWithTimestamp.last_updated);
             timestamp = updateTime.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-        } else {
-            // Fallback to current time
-            const now = new Date();
-            timestamp = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
         }
 
+        // Update timestamp in HTML
         htmlTemplate = htmlTemplate.replace(
             /<span id="update-timestamp">.*?<\/span>/,
             `<span id="update-timestamp">${timestamp}</span>`
@@ -146,27 +155,50 @@ async function generateStaticSite() {
             `<span id="product-count">${successfulPrices}</span>`
         );
         
-        // Remove the old dynamic price fetching script that expects the old JSON structure
-        const dynamicScriptRegex = /<script>\s*document\.addEventListener\('DOMContentLoaded', function\(\) \{[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[\s\S]*?<\/script>/;
-        if (htmlTemplate.match(dynamicScriptRegex)) {
-            htmlTemplate = htmlTemplate.replace(dynamicScriptRegex, '');
-            console.log('Removed old dynamic price fetching script');
-        } else {
-            // Fallback: look for any fetch script that might be using the old structure
-            const fetchScriptRegex = /<script>[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[^']*products\.json'\)[\s\S]*?<\/script>/;
-            if (htmlTemplate.match(fetchScriptRegex)) {
-                htmlTemplate = htmlTemplate.replace(fetchScriptRegex, '');
-                console.log('Removed old dynamic price fetching script (fallback)');
-            }
-        }
+        // Remove old dynamic price fetching scripts (both Amazon and generic)
+        const scriptPatterns = [
+            // Amazon-specific patterns
+            /<script>\s*document\.addEventListener\('DOMContentLoaded', function\(\) \{[\s\S]*?amazon[\s\S]*?<\/script>/i,
+            /<script>[\s\S]*?ProductAdvertising[\s\S]*?<\/script>/,
+            /<script>[\s\S]*?paapi[\s\S]*?<\/script>/,
+            /<script>[\s\S]*?aws[\s\S]*?<\/script>/,
+            // Generic dynamic fetching patterns
+            /<script>\s*document\.addEventListener\('DOMContentLoaded', function\(\) \{[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[\s\S]*?<\/script>/,
+            /<script>[\s\S]*?fetch\('https:\/\/raw\.githubusercontent\.com[^']*products\.json'\)[\s\S]*?<\/script>/,
+            // Any script that mentions API keys or dynamic loading
+            /<script>[\s\S]*?(api_key|API_KEY|apikey)[\s\S]*?<\/script>/i
+        ];
         
-        // Write the final HTML file
+        scriptPatterns.forEach((pattern, index) => {
+            if (htmlTemplate.match(pattern)) {
+                htmlTemplate = htmlTemplate.replace(pattern, '');
+                console.log(`✅ Removed old dynamic script (pattern ${index + 1})`);
+            }
+        });
+        
+        // Add comment indicating static generation
+        const staticComment = `
+<!-- 
+    This page was statically generated with EcommerceAPI data.
+    All prices are embedded directly in the HTML for optimal performance.
+    Last updated: ${timestamp}
+-->
+`;
+        
+        // Insert comment before closing head tag
+        htmlTemplate = htmlTemplate.replace('</head>', `${staticComment}</head>`);
+        
+        // Write final HTML file
         fs.writeFileSync('index.html', htmlTemplate);
         
-        console.log('Static site generated successfully!');
-        console.log(`Updated ${successfulPrices} out of ${productsData.length} products with current prices`);
-        console.log(`Last updated: ${timestamp}`);
-        console.log(`Generated index.html (${fs.statSync('index.html').size} bytes)`);
+        console.log('🎉 Static site generated successfully!');
+        console.log(`📊 Summary:`);
+        console.log(`   • Total products: ${productsData.length}`);
+        console.log(`   • Products with prices: ${successfulPrices}`);
+        console.log(`   • Success rate: ${productsData.length > 0 ? (successfulPrices/productsData.length*100).toFixed(1) : 0}%`);
+        console.log(`   • Last updated: ${timestamp}`);
+        console.log(`   • File size: ${(fs.statSync('index.html').size / 1024).toFixed(1)} KB`);
+        console.log(`   • Data source: EcommerceAPI`);
         
         return {
             success: true,
@@ -176,13 +208,45 @@ async function generateStaticSite() {
         };
         
     } catch (error) {
-        console.error('Error generating static site:', error);
+        console.error('❌ Error generating static site:', error.message);
         console.error('Stack trace:', error.stack);
+        
+        // Create minimal fallback HTML if possible
+        try {
+            if (fs.existsSync('index-template.html')) {
+                let fallbackHtml = fs.readFileSync('index-template.html', 'utf8');
+                
+                // Clear tbody and add error message
+                fallbackHtml = fallbackHtml.replace(
+                    /<tbody id="powerprices-body" lang="en">[\s\S]*?<\/tbody>/,
+                    '<tbody id="powerprices-body" lang="en"><tr><td colspan="9">Error loading product data from EcommerceAPI. Please check the logs.</td></tr></tbody>'
+                );
+                
+                // Update timestamp
+                const errorTime = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                fallbackHtml = fallbackHtml.replace(
+                    /<span id="update-timestamp">.*?<\/span>/,
+                    `<span id="update-timestamp">${errorTime}</span>`
+                );
+                
+                // Update product count
+                fallbackHtml = fallbackHtml.replace(
+                    /<span id="product-count">\d*<\/span>/,
+                    '<span id="product-count">0</span>'
+                );
+                
+                fs.writeFileSync('index.html', fallbackHtml);
+                console.log('🔄 Created fallback index.html');
+            }
+        } catch (fallbackError) {
+            console.error('Failed to create fallback HTML:', fallbackError.message);
+        }
+        
         process.exit(1);
     }
 }
 
-// Run the generator
+// Run if called directly
 if (require.main === module) {
     generateStaticSite();
 }
