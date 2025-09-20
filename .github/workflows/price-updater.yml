@@ -44,7 +44,7 @@ jobs:
         if [ ! -f "product_asin.csv" ]; then
           echo "Warning: product_asin.csv file not found"
         else
-          echo "✅ Found product_asin.csv"
+          echo "Found product_asin.csv"
           head -5 product_asin.csv
         fi
         if [ ! -f "generate-static-site.js" ]; then
@@ -60,9 +60,9 @@ jobs:
       env:
         ECOMMERCE_API_KEY: ${{ secrets.ECOMMERCE_API_KEY }}
       run: |
-        echo "🚀 Starting price fetch with ecommerce API..."
+        echo "Starting price fetch with ecommerce API..."
         python scraper.py || {
-          echo "❌ Scraper failed, checking for existing data..."
+          echo "Scraper failed, checking for existing data..."
           if [ ! -f "products.json" ]; then
             echo "No existing data found, creating empty structure"
             echo '[]' > products.json
@@ -74,27 +74,12 @@ jobs:
     - name: Verify products data
       run: |
         if [ -f "products.json" ]; then
-          echo "✅ Products data exists"
+          echo "Products data exists"
           echo "File size: $(wc -c < products.json) bytes"
           echo "Products structure preview:"
           head -10 products.json
-          PRODUCT_COUNT=$(python -c "
-import json
-try:
-    with open('products.json', 'r') as f:
-        data = json.load(f)
-    if isinstance(data, list):
-        total = len(data)
-        with_prices = len([p for p in data if p.get('price')])
-        print(f'Total: {total}, With prices: {with_prices}')
-    else:
-        print('Unexpected JSON structure')
-except Exception as e:
-    print(f'Error reading JSON: {e}')
-" 2>/dev/null || echo "Could not analyze products data")
-          echo "Product analysis: $PRODUCT_COUNT"
         else
-          echo "⚠️ No products.json found after scraping"
+          echo "No products.json found after scraping"
         fi
         
     - name: Setup Node.js
@@ -111,7 +96,7 @@ except Exception as e:
         
     - name: Generate static HTML
       run: |
-        echo "🏗️ Generating static HTML site..."
+        echo "Generating static HTML site..."
         node generate-static-site.js
         
     - name: Verify generated files
@@ -120,7 +105,7 @@ except Exception as e:
           echo "Error: index.html was not generated"
           exit 1
         fi
-        echo "✅ Generated files successfully:"
+        echo "Generated files successfully:"
         ls -la *.html *.json
         echo "index.html size: $(wc -c < index.html) bytes"
         
@@ -140,18 +125,12 @@ except Exception as e:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        
-        # Add the updated products data
         if [ -f "products.json" ]; then
           git add products.json
         fi
-        
-        # Add the generated HTML
         if [ -f "index.html" ]; then
           git add index.html
         fi
-        
-        # Check if there are changes to commit
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
@@ -161,22 +140,5 @@ except Exception as e:
         
     - name: Summary
       run: |
-        echo "✅ Deployment completed successfully"
-        echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
-        if [ -f "products.json" ]; then
-          PRICE_SUMMARY=$(python -c "
-import json
-try:
-    with open('products.json', 'r') as f:
-        data = json.load(f)
-    if isinstance(data, list):
-        total = len(data)
-        with_prices = len([p for p in data if p.get('price')])
-        print(f'{with_prices}/{total}')
-    else:
-        print('Unknown')
-except:
-    print('Error')
-" 2>/dev/null || echo "Unknown")
-          echo "💰 Products with prices: $PRICE_SUMMARY"
-        fi
+        echo "Deployment completed successfully"
+        echo "Site URL: ${{ steps.deployment.outputs.page_url }}"
