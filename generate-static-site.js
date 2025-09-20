@@ -113,17 +113,41 @@ async function generateStaticSite() {
         let tbodyHtml = '';
         let successfulPrices = 0;
         
+		// Helper function to extract brand from link text
+			function extractBrandFromLinkText(linkText) {
+				if (!linkText) return 'other_brand';
+				
+				const text = linkText.toLowerCase();
+				
+				// Check for brand names at the beginning of link text
+				if (text.startsWith('honda')) return 'honda';
+				if (text.startsWith('yamaha')) return 'yamaha';
+				if (text.startsWith('generac')) return 'generac';
+				if (text.startsWith('champion')) return 'champion';
+				if (text.startsWith('westinghouse')) return 'westinghouse';
+				if (text.startsWith('zerokor')) return 'zerokor';
+				if (text.startsWith('ef ecoflow') || text.startsWith('ecoflow')) return 'ef_ecoflow';
+				if (text.startsWith('bluetti')) return 'bluetti';
+				if (text.startsWith('jackery')) return 'jackery';
+				if (text.startsWith('anker')) return 'anker';
+				if (text.startsWith('marbero')) return 'marbero';
+				if (text.startsWith('oupes')) return 'oupes';
+				if (text.startsWith('grecell')) return 'grecell';
+				if (text.startsWith('allwei')) return 'allwei';
+				if (text.startsWith('allpowers')) return 'allpowers';
+				if (text.startsWith('pecron')) return 'pecron';
+				if (text.startsWith('dji')) return 'other_brand';
+				if (text.startsWith('litheli')) return 'other_brand';
+				
+				return 'other_brand';
+			}
+		
         productsData.forEach((product, index) => {
             if (!product || typeof product !== 'object') {
                 console.warn(`Skipping invalid product at index ${index}`);
                 return;
             }
-            
-            // Extract and clean price data
-            let price = 'N/A';
-            let pricePerWatt = 'N/A';
-            let dataPrice = '0';
-            
+                                  
             if (product.price) {
                 let priceValue = 0;
                 
@@ -169,7 +193,7 @@ async function generateStaticSite() {
             const condition = product.condition || 'new'; // Default to 'new'
             
             // Normalize data for filters
-            const normalizedBrand = normalizeBrand(brand);
+            const normalizedBrand = extractBrandFromLinkText(linkText);
             const normalizedFuelType = normalizeFuelType(fuelType);
             const productType = getProductType(runningWatts);
             
