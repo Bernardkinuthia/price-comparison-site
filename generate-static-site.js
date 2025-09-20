@@ -53,41 +53,37 @@ async function generateStaticSite() {
             return 'large_wattage';
         }
         
-        // Helper function to extract and normalize brand names from product title
-        function extractAndNormalizeBrand(productTitle) {
-            if (!productTitle) return 'other_brand';
+        // Helper function to normalize brand names
+        function normalizeBrand(brandName) {
+            if (!brandName) return 'other_brand';
             
-            const title = productTitle.toLowerCase();
+            const brand = brandName.toLowerCase().trim();
             
-            // Check for brand names in the product title
-            const brandChecks = [
-                { keywords: ['honda'], brand: 'honda' },
-                { keywords: ['yamaha'], brand: 'yamaha' },
-                { keywords: ['generac'], brand: 'generac' },
-                { keywords: ['champion'], brand: 'champion' },
-                { keywords: ['westinghouse'], brand: 'westinghouse' },
-                { keywords: ['zerokor'], brand: 'zerokor' },
-                { keywords: ['ef ecoflow', 'ecoflow'], brand: 'ef_ecoflow' },
-                { keywords: ['bluetti'], brand: 'bulleti' },
-                { keywords: ['jackery'], brand: 'jackery' },
-                { keywords: ['anker'], brand: 'anker' },
-                { keywords: ['marbero'], brand: 'marbero' },
-                { keywords: ['oupes'], brand: 'oupes' },
-                { keywords: ['grecell'], brand: 'grecell' },
-                { keywords: ['allwei'], brand: 'allwei' },
-                { keywords: ['allpowers'], brand: 'allpowers' },
-                { keywords: ['pecron'], brand: 'pecron' },
-                { keywords: ['dji'], brand: 'other_brand' },
-                { keywords: ['litheli'], brand: 'other_brand' }
-            ];
+            // Map common brand variations to your filter values
+            const brandMap = {
+                'honda': 'honda',
+                'yamaha': 'yamaha',
+                'generac': 'generac',
+                'champion': 'champion',
+                'westinghouse': 'westinghouse',
+                'zerokor': 'zerokor',
+                'ef ecoflow': 'ef_ecoflow',
+                'ecoflow': 'ef_ecoflow',
+                'bluetti': 'bulleti',
+                'bulleti': 'bulleti',
+                'jackery': 'jackery',
+                'anker': 'anker',
+                'marbero': 'marbero',
+                'oupes': 'oupes',
+                'grecell': 'grecell',
+                'allwei': 'allwei',
+                'allpowers': 'allpowers',
+                'pecron': 'pecron',
+                'dji': 'other_brand',
+                'litheli': 'other_brand'
+            };
             
-            for (const check of brandChecks) {
-                if (check.keywords.some(keyword => title.includes(keyword))) {
-                    return check.brand;
-                }
-            }
-            
-            return 'other_brand';
+            return brandMap[brand] || 'other_brand';
         }
         
         // Helper function to normalize fuel type
@@ -160,29 +156,22 @@ async function generateStaticSite() {
             }
             
             // Clean and format product data with fallbacks
-            const runningWatts = parseFloat(product.running_wattage) || 0;
-            const startingWatts = parseFloat(product.starting_wattage) || 0;
-            const runTime = parseFloat(product.run_time) || 0;
+            const runningWatts = product.running_wattage || 'N/A';
+            const startingWatts = product.starting_wattage || 'N/A';
+            const runTime = product.run_time || 'N/A';
             const fuelType = product.fuel_type || 'gasoline';
-            const capacity = parseFloat(product.capacity) || 0;
-            const weight = parseFloat(product.weight) || 0;
+            const capacity = product.capacity || 'N/A';
+            const weight = product.weight || 'N/A';
             const linkText = product.link_text || 'View Product';
             const affiliateLink = product.affiliate_link || '#';
             const productKey = product.asin || `product-${index}`;
-            
-            // Extract brand from product title (link text)
-            const extractedBrand = extractAndNormalizeBrand(linkText);
+            const brand = product.brand || 'Unknown';
+            const condition = product.condition || 'new'; // Default to 'new'
             
             // Normalize data for filters
+            const normalizedBrand = normalizeBrand(brand);
             const normalizedFuelType = normalizeFuelType(fuelType);
             const productType = getProductType(runningWatts);
-            
-            // Format display values
-            const displayRunningWatts = runningWatts > 0 ? runningWatts : 'N/A';
-            const displayStartingWatts = startingWatts > 0 ? startingWatts : 'N/A';
-            const displayRunTime = runTime > 0 ? runTime : 'N/A';
-            const displayCapacity = capacity > 0 ? capacity : 'N/A';
-            const displayWeight = weight > 0 ? weight : 'N/A';
             
             // Generate table row with ALL required data attributes for filtering
             tbodyHtml += `
@@ -194,17 +183,18 @@ async function generateStaticSite() {
                         data-fuel-type="${normalizedFuelType}" 
                         data-weight="${weight}" 
                         data-price="${dataPrice}"
-                        data-brand="${extractedBrand}"
+                        data-brand="${normalizedBrand}"
+                        data-condition="${condition}"
                         data-product-type="${productType}"
                         data-run-time="${runTime}">
                         <td class="price">${price}</td>
                         <td class="price-per-watt">${pricePerWatt}</td>
-                        <td>${displayRunningWatts}</td>
-                        <td>${displayStartingWatts}</td>
-                        <td>${displayRunTime}</td>
+                        <td>${runningWatts}</td>
+                        <td>${startingWatts}</td>
+                        <td>${runTime}</td>
                         <td>${fuelType}</td>
-                        <td>${displayCapacity}</td>
-                        <td>${displayWeight}</td>
+                        <td>${capacity}</td>
+                        <td>${weight}</td>
                         <td class="name"><a href="${affiliateLink}" target="_blank" rel="noopener noreferrer">${linkText}</a></td>
                     </tr>`;
         });
