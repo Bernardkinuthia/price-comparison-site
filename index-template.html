@@ -1,747 +1,734 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""
+EcommerceAPI Product Price Fetcher
+Uses EcommerceAPI.io to fetch Amazon product prices and information
+Updated to use third-party API instead of Amazon's Product Advertising API
+"""
 
-<html lang="en">
-<head>
-<title>Generator Prices</title>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<meta content="Comparison of generators on Amazon, sorted by price per watt" name="description"/>
-<style>
-        body {
-            font-family: sans-serif;
-            font-size: 10pt;
-            margin: 0;
-        }
+import pandas as pd
+import json
+import os
+import logging
+from datetime import datetime
+import time
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-        li {
-            line-height: 1.5em;
-        }
-
-        table, td, tr, th {
-            border: 0;
-        }
-
-        th {
-            text-align: left;
-            padding-right: 3em;
-        }
-
-        tr {
-            line-height: 1.2em;
-        }
-
-        td {
-            vertical-align: top;
-            white-space: nowrap;
-        }
-
-        td.name {
-            white-space: normal;
-        }
-
-        th {
-            padding-right: 0.75em;
-        }
-
-        fieldset {
-            width: 10em;
-            margin: 0;
-            margin-bottom: 0.5em;
-            border: 1px solid black;
-        }
-
-        label {
-            display: block;
-        }
-
-        #filters {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 12em;
-            height: 100vh;
-            overflow-y: auto;
-            padding: 0.5em;
-            background-color: #f9f9f9;
-            border-right: 1px solid #ddd;
-        }
-
-        #filters .capacity label {
-            display: inline-block;
-            width: 4em;
-        }
-
-        #filters .capacity input {
-            display: inline-block;
-            width: 3.5em;
-        }
-
-        legend {
-            font-weight: bold;
-            padding-left: 0;
-        }
-
-        td input {
-            width: 3em;
-        }
-
-        td select {
-            width: 10em;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .active {
-            text-decoration: none;
-            color: #000;
-            font-weight: bold;
-        }
-
-        #main-content {
-            margin-left: 13em;
-            padding: 0.5em;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        th {
-            background-color: #f2f2f2;
-            vertical-align: middle;
-            line-height: 1.3;
-        }
-
-        th:nth-child(2), td:nth-child(2) {
-            width: 70px;
-            min-width: 70px;
-        }
-
-        th:nth-child(3), td:nth-child(3) {
-            width: 50px;
-            min-width: 50px;
-        }
-
-        th:nth-child(4), td:nth-child(4) {
-            width: 50px;
-            min-width: 50px;
-        }
-
-        th:nth-child(8), td:nth-child(8) {
-            width: 650px;
-            min-width: 600px;
-        }
-
-        .filtered-out {
-            display: none;
-        }
-
-        #links a {
-            color: #0066cc;
-            text-decoration: none;
-            display: block;
-            padding: 4px 0;
-        }
-
-        #links a:hover {
-            color: #004499;
-            text-decoration: underline;
-        }
-
-        #links li {
-            margin-bottom: 8px;
-        }
-
-        /* Responsive Design */
-        @media screen and (max-width: 768px) {
-            #filters {
-                position: relative;
-                width: 100%;
-                height: auto;
-                padding: 10px;
-                margin-bottom: 20px;
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-            }
-            
-            #affiliate-disclosure {
-                margin-left: 10px;
-            }
-            
-            #main-content {
-                margin-left: 0;
-                padding: 10px;
-            }
-            
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            table {
-                min-width: 800px;
-                font-size: 12px;
-            }
-            
-            th, td {
-                padding: 6px 4px;
-                white-space: nowrap;
-            }
-            
-            th:nth-child(8), td:nth-child(8) {
-                width: 300px;
-                min-width: 250px;
-                white-space: normal;
-            }
-            
-            #filters {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            
-            #filters fieldset {
-                width: auto;
-                min-width: 150px;
-                flex: 1;
-            }
-            
-            #filters fieldset.last {
-                width: 100%;
-                flex-basis: 100%;
-            }
-        }
-
-        @media screen and (max-width: 480px) {
-            body {
-                font-size: 9pt;
-            }
-            
-            table {
-                font-size: 10px;
-            }
-            
-            th, td {
-                padding: 4px 2px;
-            }
-            
-            #filters fieldset {
-                min-width: 120px;
-            }
-            
-            th:nth-child(8), td:nth-child(8) {
-                width: 200px;
-                min-width: 180px;
-            }
-        }
-    </style>
-</head>
-<body>
-<div id="affiliate-disclosure" style="
-        background-color: #fff3cd; 
-        border: 1px solid #ffeaa7; 
-        padding: 10px 15px; 
-        margin-left: 14em; 
-        margin-right: 10px;
-        margin-top: 10px;
-        margin-bottom: 15px;
-        border-radius: 5px; 
-        font-size: 13px;
-        line-height: 1.4;
-        position: relative;
-        z-index: 10;
-    ">
-<strong>⚠️ Affiliate Disclosure:</strong> This website contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no additional cost to you. This means if you click on a link and make a purchase, I may receive a small commission. All prices and product information are accurate as of the last update and subject to change. I only recommend products I believe will be valuable to you.
-    </div>
-<div id="filters">
-<fieldset class="condition">
-<legend>Condition</legend>
-<label><input checked="" data-condition="new" type="checkbox"/>New</label>
-<label><input checked="" data-condition="used" type="checkbox"/>Used</label>
-</fieldset>
-<fieldset class="wattage">
-<legend>Output Wattage</legend>
-<input id="wattage_min" min="0" placeholder="W" size="2" type="number"/>
-<label for="wattage_min">Minimum</label>
-<input id="wattage_max" min="0" placeholder="W" size="2" type="number"/>
-<label for="wattage_max">Maximum</label>
-</fieldset>
-<fieldset class="capacity">
-<legend>Battery Capacity (Wh)</legend>
-<input id="capacity_min" min="0" placeholder="Wh" size="2" type="number"/>
-<label for="capacity_min">Minimum</label>
-<input id="capacity_max" min="0" placeholder="Wh" size="2" type="number"/>
-<label for="capacity_max">Maximum</label>
-</fieldset>
-<fieldset class="category">
-<legend>
-<label><input checked="" data-category="generator" type="checkbox"/>Generators</label>
-</legend>
-<div class="product_type">
-<label><input checked="" class="filter" data-category="generator" data-product-type="small_wattage" type="checkbox"/>Small (0-500W)</label>
-</div>
-<div class="product_type">
-<label><input checked="" class="filter" data-category="generator" data-product-type="medium_wattage" type="checkbox"/>Medium (501-1500W)</label>
-</div>
-<div class="product_type">
-<label><input checked="" class="filter" data-category="generator" data-product-type="large_wattage" type="checkbox"/>Large (1501W+)</label>
-</div>
-</fieldset>
-<fieldset class="fuel_type">
-<legend>Fuel Type</legend>
-<label><input checked="" data-fuel-type="gasoline" type="checkbox"/>Gasoline</label>
-<label><input checked="" data-fuel-type="diesel" type="checkbox"/>Diesel</label>
-<label><input checked="" data-fuel-type="propane" type="checkbox"/>Propane</label>
-<label><input checked="" data-fuel-type="dual_fuel" type="checkbox"/>Dual Fuel</label>
-<label><input checked="" data-fuel-type="tri_fuel" type="checkbox"/>Tri Fuel</label>
-<label><input checked="" data-fuel-type="solar" type="checkbox"/>Solar</label>
-<label><input checked="" data-fuel-type="battery" type="checkbox"/>Battery</label>
-</fieldset>
-<fieldset class="engine_type">
-<legend>Engine Type</legend>
-<label><input checked="" data-engine-type="2_stroke" type="checkbox"/>2 Stroke</label>
-<label><input checked="" data-engine-type="4_stroke" type="checkbox"/>4 Stroke</label>
-<label><input checked="" data-engine-type="electric" type="checkbox"/>Electric</label>
-</fieldset>
-<fieldset class="brand">
-<legend>Popular Brands</legend>
-<label><input checked="" data-brand="honda" type="checkbox"/>Honda</label>
-<label><input checked="" data-brand="yamaha" type="checkbox"/>Yamaha</label>
-<label><input checked="" data-brand="generac" type="checkbox"/>Generac</label>
-<label><input checked="" data-brand="champion" type="checkbox"/>Champion</label>
-<label><input checked="" data-brand="westinghouse" type="checkbox"/>Westinghouse</label>
-<label><input checked="" data-brand="zerokor" type="checkbox"/>ZeroKor</label>
-<label><input checked="" data-brand="ef_ecoflow" type="checkbox"/>EF Ecoflow</label>
-<label><input checked="" data-brand="bulleti" type="checkbox"/>Bulleti</label>
-<label><input checked="" data-brand="jackery" type="checkbox"/>Jackery</label>
-<label><input checked="" data-brand="anker" type="checkbox"/>Anker</label>
-<label><input checked="" data-brand="marbero" type="checkbox"/>MARBERO</label>
-<label><input checked="" data-brand="oupes" type="checkbox"/>OUPES</label>
-<label><input checked="" data-brand="grecell" type="checkbox"/>GRECELL</label>
-<label><input checked="" data-brand="allwei" type="checkbox"/>ALLWEI</label>
-<label><input checked="" data-brand="allpowers" type="checkbox"/>ALLPOWERS</label>
-<label><input checked="" data-brand="pecron" type="checkbox"/>Pecron</label>
-<label><input checked="" data-brand="other_brand" type="checkbox"/>Other Brands</label>
-</fieldset>
-<fieldset id="links">
-<legend>Site Pages</legend>
-<ul>
-<li><a href="/faq.html">FAQ</a></li>
-<li><a href="/privacy-policy.html">Privacy Policy</a></li>
-<li><a href="/terms-of-service.html">Terms of Use</a></li>
-<li><a href="/amazon-affiliate-disclosure.html">Amazon Affiliate Disclosure</a></li>
-<li><a href="/contact.html">Contact Us</a></li>
-<li><a href="/about-us.html">About Us</a></li>
-</ul>
-</fieldset>
-<fieldset class="last">
-            This site is supported by paid affiliate links. <a href="/amazon-affiliate-disclosure.html">Learn more</a>
-</fieldset>
-</div>
-<div id="main-content">
-<div class="table-wrapper">
-<table id="Generator Prices">
-<thead>
-<tr id="powerprices-head">
-<th>Price</th>
-<th>Price /<br/> Watt</th>
-<th>Output<br/>Wattage<br/>(W)</th>
-<th>Battery<br/>Capacity<br/>(Wh)</th>
-<th>Fuel <br/>Type</th>
-<th>Engine <br/>Type</th>
-<th>Condition</th>
-<th>Affiliate Link</th>
-</tr>
-</thead>
-<tbody id="powerprices-body" lang="en">
-<!-- DJI Power 1000 -->
-<tr class="generator" data-brand="other_brand" data-capacity="1024" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="dji-power-1000-portable" data-product-type="large_wattage" data-wattage="2200">
-<td class="price">$499.00</td>
-<td class="price-per-watt">$0.227</td>
-<td>2200</td>
-<td>1024Wh</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4nuXr7n" rel="noopener noreferrer" target="_blank">DJI Power 1000 Portable Power Station, 1024Wh LiFePO4 Battery, 2200W (Peak 2600W) AC/140W USB-C Output, 23db Ultra-Silent, Solar Generator For Home Backup, Camping(Solar Panel Optional)</a></td>
-</tr>
-<!-- BLUETTI Solar Generator -->
-<tr class="generator" data-brand="bulleti" data-capacity="768" data-condition="new" data-engine-type="electric" data-fuel-type="battery" data-price="0" data-product-key="bluetti-ac70-768wh" data-product-type="medium_wattage" data-wattage="1000">
-<td class="price">$569.00</td>
-<td class="price-per-watt">$0.569</td>
-<td>1000</td>
-<td>768</td>
-<td>Battery</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/3Keq1LE" rel="noopener noreferrer" target="_blank">BLUETTI Solar Generator AC70, 768Wh LiFePO4 Battery Backup w/ 2 1000W AC Outlets (Power Lifting 2000W), 100W Type-C, for Road Trip, Off-grid, Power Outage (Solar Panel Optional)</a></td>
-</tr>
-<!-- EF ECOFLOW Portable Power Station -->
-<tr class="generator" data-brand="ef_ecoflow" data-capacity="768" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="ecoflow-river-2-pro" data-product-type="small_wattage" data-wattage="800">
-<td class="price">$379.00</td>
-<td class="price-per-watt">$0.474</td>
-<td>800</td>
-<td>768</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/47D9dI1" rel="noopener noreferrer" target="_blank">EF ECOFLOW Portable Power Station RIVER 2 Pro, 768Wh LiFePO4 Battery, 70 Min Fast Charging, 4X300W AC Outlets, Solar Generator for Outdoor Camping/RVs/Home Use Black</a></td>
-</tr>
-<!-- Anker SOLIX F2000 -->
-<tr class="generator" data-brand="anker" data-capacity="767" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="anker-solix-f2000" data-product-type="large_wattage" data-wattage="2400">
-<td class="price">$1999.00</td>
-<td class="price-per-watt">$0.833</td>
-<td>2400</td>
-<td>2048</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/3VvFERD" rel="noopener noreferrer" target="_blank">Anker SOLIX F2000 Portable Power Station, Powerhouse 767, 2400W Solar Generator, GaNPrime Battery Generators for Home Use, LiFePO4 Power Station for Outdoor Camping, and RVs (Solar Panel Optional)</a></td>
-</tr>
-<!-- Jackery Solar Generator 5000 Plus -->
-<tr class="generator" data-brand="jackery" data-capacity="5040" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="jackery-5000-plus" data-product-type="large_wattage" data-wattage="7200">
-<td class="price">$5199.00</td>
-<td class="price-per-watt">$0.722</td>
-<td>7200</td>
-<td>5040</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/46eaByB" rel="noopener noreferrer" target="_blank">Jackery Solar Generator 5000 Plus Portable Power Station with 2x 500W Solar Panels and Smart Transfer Switch, 5040Wh Power Station, 7200W AC Output Solar Generator for Home Use, Emergency Backup</a></td>
-</tr>
-<!-- DABBSSON 2000L Solar Generator -->
-<tr class="generator" data-brand="other_brand" data-capacity="2048" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="dabbsson-2000l" data-product-type="large_wattage" data-wattage="2200">
-<td class="price">$709.00</td>
-<td class="price-per-watt">$0.322</td>
-<td>2200</td>
-<td>2048</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4pdQbyt" rel="noopener noreferrer" target="_blank">DABBSSON 2000L Solar Generator(2025 New), 2048Wh Semi-Solid LiFePO4, 2200W AC Output&amp;8, P-Boost 3300W, Compact&amp;Lightweight, 1.3X Runtime, Portable Power Station for Camping/Home/RV</a></td>
-</tr>
-<!-- ZeroKor Portable Solar Generator -->
-<tr class="generator" data-brand="zerokor" data-capacity="380" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="zerokor-300w-portable" data-product-type="small_wattage" data-wattage="300">
-<td class="price">$229.98</td>
-<td class="price-per-watt">$0.767</td>
-<td>300</td>
-<td>380</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4n0UDyW" rel="noopener noreferrer" target="_blank">ZeroKor Portable Solar Generator, 300W Portable Power Station with Foldable 60W Solar Panel, 110V Pure Sine Wave 280Wh Lithium Battery Pack with USB DC AC Outlet for Home Use RV Van Outdoor Camping-Orange</a></td>
-</tr>
-<!-- GRECELL 1000W Portable Power Station -->
-<tr class="generator" data-brand="grecell" data-capacity="999" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="grecell-1000w-100w-solar-panel" data-product-type="medium_wattage" data-wattage="1000">
-<td class="price">$579.99</td>
-<td class="price-per-watt">$0.580</td>
-<td>1000</td>
-<td>999</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4niyXhi" rel="noopener noreferrer" target="_blank">GRECELL 1000W Portable Power Station With 2x 100W Solar Panels, 999Wh Backup Lithium Battery, Pure Sine Wave AC Outlet, 60W PD Quick Charge Solar Generator Set for Outdoor Emergency Camping Travel</a></td>
-</tr>
-<!-- ALLPOWERS 600W Portable Power Station -->
-<tr class="generator" data-brand="allpowers" data-capacity="299" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="allpowers-600w-299wh" data-product-type="small_wattage" data-wattage="600">
-<td class="price">$219.00</td>
-<td class="price-per-watt">$0.365</td>
-<td>600</td>
-<td>299</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4605svc" rel="noopener noreferrer" target="_blank">ALLPOWERS 600W Portable Power Station, 299Wh LiFePO4 Battery Backup, R600(Peak 1200w) Solar Generator, 1 Hour Full Charge Solar Power Bank, for Home Outdoor Travel Emergency RV</a></td>
-</tr>
-<!-- Pecron Portable Power Station E1000LFP -->
-<tr class="generator" data-brand="pecron" data-capacity="1024" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="pecron-e1000lfp" data-product-type="large_wattage" data-wattage="1800">
-<td class="price">$399.00</td>
-<td class="price-per-watt">$0.222</td>
-<td>1800</td>
-<td>1024</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/3JVcLeZ" rel="noopener noreferrer" target="_blank">Pecron Portable Power Station E1000LFP, 1024Wh/1800W LiFePO4 Battery Backup, Solar Generator, Expandable to 4096Wh, Fast Charging Power Station for Emergencies, Camping, RV, Home Use</a></td>
-</tr>
-<tr class="generator" data-brand="other_brand" data-capacity="266" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="ampace-portable-power-station-andes-300-266wh-batt" data-product-type="small_wattage" data-wattage="300">
-<td class="price">N/A</td>
-<td class="price-per-watt">N/A</td>
-<td>300</td>
-<td>266Wh</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4n2c1U1" rel="noopener noreferrer" target="_blank">AMPACE Portable Power Station Andes 300, 266Wh Battery with 300W AC/100W USB-C Output, 1Hr Fast Charging, 8.2lbs Solar Generator for RV, Outdoors, Camping batteries, Traveling, (Solar Panel Optional)</a></td>
-</tr>
-<tr class="generator" data-brand="other_brand" data-capacity="2048" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="growatt-portable-power-station-infinity-2000-black" data-product-type="large_wattage" data-wattage="2400">
-<td class="price">N/A</td>
-<td class="price-per-watt">N/A</td>
-<td>2400</td>
-<td>2048Wh</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4nMYAaD" rel="noopener noreferrer" target="_blank">GROWATT Portable Power Station ?INFINITY 2000 Black Electric Solar Generator?2048Wh LifePO4 Battery,2400W AC Output for Home Use, Outdoor Camping, RVs and Emergency Backup(Solar Panel Optional)</a></td>
-</tr>
-<tr class="generator" data-brand="other_brand" data-capacity="1069" data-condition="new" data-engine-type="electric" data-fuel-type="solar" data-price="0" data-product-key="litheli-portable-power-station-eclair-1000-1800w-s" data-product-type="large_wattage" data-wattage="1800">
-<td class="price">N/A</td>
-<td class="price-per-watt">N/A</td>
-<td>1800</td>
-<td>1069Wh</td>
-<td>Solar</td>
-<td>Electric</td>
-<td>New</td>
-<td class="name"><a href="https://amzn.to/4n88zY8" rel="noopener noreferrer" target="_blank">Litheli Portable Power Station Eclair 1000, 1800W Solar Generator, 1069Wh Outdoor Generator, 1H Fast Charging LiFePO4 Power Station for Outdoor Camping, Emergency and RVs(Solar Panels Optional)</a></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div style="margin-top: 30px;">
-<p id="detailed-disclosures" style="
-                font-size: 12px; 
-                color: #666; 
-                padding: 20px; 
-                background-color: #f8f9fa; 
-                border-radius: 5px;
-                line-height: 1.5;
-                margin-bottom: 20px;
-            ">
-<strong>Important Disclosures:</strong><br/><br/>
-<strong>Amazon Associate:</strong> This site is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com.<br/><br/>
-<strong>Pricing Information:</strong> All product prices and availability are automatically updated from Amazon's Product Advertising API and are accurate as of the last update. Prices and availability are subject to change without notice. Any price displayed on Amazon at the time of purchase will govern the sale.<br/><br/>
-<strong>Commission Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases. When you purchase through our affiliate links, we may earn a commission at no additional cost to you. This helps support our website and allows us to continue providing price comparisons.<br/><br/>
-<strong>Data Accuracy:</strong> While we strive to provide accurate and up-to-date information, we make no warranties about the completeness, reliability, or accuracy of this information. Product specifications, pricing, and availability can change rapidly.<br/><br/>
-<strong>Independent Research:</strong> We encourage you to verify all product information, read reviews, and compare prices before making any purchase decisions. This comparison tool is meant to assist your research, not replace it.
-            </p>
-<p id="last-updated-info" style="
-                font-size: 11px; 
-                color: #888; 
-                text-align: center; 
-                padding: 10px;
-                border-top: 1px solid #ddd;
-                margin-bottom: 20px;
-            ">
-                Last updated: <span id="update-timestamp">2025-09-13 00:41:32</span> | Showing <span id="product-count">10</span> products
-            </p>
-<div style="text-align: center; padding: 15px; border-top: 1px solid #eee;">
-<a href="/faq.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">FAQ</a> | 
-                <a href="/privacy-policy.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Privacy Policy</a> | 
-                <a href="/terms-of-service.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Terms of Use</a> | 
-                <a href="/amazon-affiliate-disclosure.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Amazon Affiliate Disclosure</a> | 
-                <a href="/contact.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">Contact Us</a> | 
-                <a href="/about-us.html" style="margin: 0 15px; color: #666; text-decoration: none; font-size: 12px;">About Us</a>
-</div>
-</div>
-</div>
-<script>
-// Minimal JavaScript for filtering functionality
-var f = document.getElementById('filters');
-
-function get_filters() {
-    var filters = {
-        category: {},
-        condition: {},
-        fuel_type: {},
-        engine_type: {},
-        brand: {},
-        wattage_min: 0,
-        wattage_max: null,
-        capacity_min: 0,
-        capacity_max: null
-    };
-
-    f.querySelectorAll('.product_type input').forEach(function(checkbox) {
-        if(!filters.category[checkbox.dataset.category]) {
-            filters.category[checkbox.dataset.category] = {};
-        }
-        filters.category[checkbox.dataset.category][checkbox.dataset.productType] = checkbox.checked;
-    });
-
-    f.querySelectorAll('.condition input').forEach(function(checkbox) {
-        filters.condition[checkbox.dataset.condition] = checkbox.checked;
-    });
-
-    f.querySelectorAll('.fuel_type input').forEach(function(checkbox) {
-        filters.fuel_type[checkbox.dataset.fuelType] = checkbox.checked;
-    });
-
-    f.querySelectorAll('.engine_type input').forEach(function(checkbox) {
-        filters.engine_type[checkbox.dataset.engineType] = checkbox.checked;
-    });
-
-    f.querySelectorAll('.brand input').forEach(function(checkbox) {
-        filters.brand[checkbox.dataset.brand] = checkbox.checked;
-    });
-
-    var wattage_min = f.querySelector('#wattage_min');
-    if(wattage_min && wattage_min.value) {
-        filters.wattage_min = Number(wattage_min.value);
-    }
-
-    var wattage_max = f.querySelector('#wattage_max');
-    if(wattage_max && wattage_max.value) {
-        filters.wattage_max = Number(wattage_max.value);
-    }
-
-    var capacity_min = f.querySelector('#capacity_min');
-    if(capacity_min && capacity_min.value) {
-        filters.capacity_min = Number(capacity_min.value);
-    }
-
-    var capacity_max = f.querySelector('#capacity_max');
-    if(capacity_max && capacity_max.value) {
-        filters.capacity_max = Number(capacity_max.value);
-    }
-
-    return filters;
-}
-
-function apply_filters() {
-    var filters = get_filters();
-    var rows = document.querySelectorAll('#powerprices-body .generator');
-    
-    rows.forEach(function(row) {
-        var show = true;
-        
-        var condition = row.dataset.condition;
-        if(!filters.condition[condition]) {
-            show = false;
-        }
-        
-        var productType = row.dataset.productType;
-        if(filters.category.generator && !filters.category.generator[productType]) {
-            show = false;
-        }
-        
-        var fuelType = row.dataset.fuelType;
-        if(!filters.fuel_type[fuelType]) {
-            show = false;
-        }
-        
-        var engineType = row.dataset.engineType;
-        if(!filters.engine_type[engineType]) {
-            show = false;
-        }
-        
-        var brand = row.dataset.brand;
-        if(!filters.brand[brand]) {
-            show = false;
-        }
-        
-        var wattage = Number(row.dataset.wattage);
-        if(wattage < filters.wattage_min) {
-            show = false;
-        }
-        if(filters.wattage_max && wattage > filters.wattage_max) {
-            show = false;
-        }
-        
-        var capacity = Number(row.dataset.capacity);
-        if(capacity < filters.capacity_min) {
-            show = false;
-        }
-        if(filters.capacity_max && capacity > filters.capacity_max) {
-            show = false;
-        }
-        
-        if(show) {
-            row.classList.remove('filtered-out');
-        } else {
-            row.classList.add('filtered-out');
-        }
-    });
-}
-
-function init_filters() {
-    f.addEventListener('change', function(e) {
-        if(e.target.type === 'checkbox' || e.target.type === 'radio') {
-            apply_filters();
-        }
-    });
-    
-    f.addEventListener('input', function(e) {
-        if(e.target.type === 'number') {
-            apply_filters();
-        }
-    });
-}
-
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    init_filters();
-    // Timestamp will be set from JSON data or hardcoded by static generator
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Fetch the JSON data
-    fetch('https://raw.githubusercontent.com/Bernardkinuthia/price-comparison-site/main/products.json')
-        .then(response => response.json())
-        .then(data => {
-            updatePrices(data);
-            // Update the timestamp and product count
-            document.getElementById('update-timestamp').textContent = new Date(data.last_updated).toLocaleString();
+class EcommerceAPIClient:
+    def __init__(self, api_key, domain='com', max_workers=10):
+        self.api_key = api_key
+        self.domain = domain
+        self.base_url = 'https://api.ecommerceapi.io'
+        self.max_workers = max_workers
+        self.session = requests.Session()
+        # Set headers for all requests
+        self.session.headers.update({
+            'User-Agent': 'ProductFetcher/1.0',
+            'Accept': 'application/json'
         })
-        .catch(error => {
-            console.error('Error fetching product data:', error);
-        });
-
-    function updatePrices(data) {
-        const rows = document.querySelectorAll('#powerprices-body .generator');
-        let updatedCount = 0;
         
-        rows.forEach(row => {
-            const linkElement = row.querySelector('td.name a');
-            if (!linkElement) return;
-            
-            const affiliateLink = linkElement.href;
-            const product = data.products.find(p => p.affiliate_link === affiliateLink);
-            
-            const priceTd = row.querySelector('td.price');
-            const pricePerWattTd = row.querySelector('td.price-per-watt');
-            
-            if (product && product.price_available) {
-                priceTd.textContent = product.price;
+    def get_product(self, asin, retries=3):
+        """Get product data from EcommerceAPI for a single ASIN"""
+        url = f"{self.base_url}/amazon/product"
+        
+        params = {
+            'api_key': self.api_key,
+            'domain': self.domain,
+            'asin': asin
+        }
+        
+        for attempt in range(retries):
+            try:
+                response = self.session.get(url, params=params, timeout=30)
+                response.raise_for_status()
                 
-                // Calculate price per watt
-                const wattage = parseInt(row.dataset.wattage);
-                const priceValue = parseFloat(product.price.replace(/[^\d.]/g, ''));
+                data = response.json()
                 
-                if (wattage > 0 && priceValue > 0) {
-                    const pricePerWatt = priceValue / wattage;
-                    pricePerWattTd.textContent = '$' + pricePerWatt.toFixed(3);
-                } else {
-                    pricePerWattTd.textContent = 'N/A';
-                }
-                
-                updatedCount++;
-            } else {
-                priceTd.textContent = 'Price unavailable';
-                pricePerWattTd.textContent = 'N/A';
+                # Check if the API returned an error
+                if 'error' in data:
+                    logger.error(f"API error for ASIN {asin}: {data['error']}")
+                def get_products_batch(self, asin_list, progress_callback=None):
+        """Get multiple products using concurrent requests"""
+        results = {}
+        completed_count = 0
+        lock = Lock()
+        
+        def fetch_single_product(asin):
+            nonlocal completed_count
+            result = self.get_product(asin)
+            with lock:
+                completed_count += 1
+                if progress_callback:
+                    progress_callback(completed_count, len(asin_list), asin)
+            return asin, result
+        
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all tasks
+            future_to_asin = {
+                executor.submit(fetch_single_product, asin): asin 
+                for asin in asin_list
             }
-        });
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_asin):
+                asin, result = future.result()
+                results[asin] = result
         
-        document.getElementById('product-count').textContent = updatedCount;
-    }
+        return results
+                
+                return data
+                
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Attempt {attempt + 1} failed for ASIN {asin}: {e}")
+                if attempt == retries - 1:
+                    logger.error(f"All {retries} attempts failed for ASIN {asin}")
+                    return None
+                time.sleep(2 ** attempt)  # Exponential backoff
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON response for ASIN {asin}: {e}")
+                return None
+        
+        return None
+
+class EcommerceProductFetcher:
+    def __init__(self, csv_file='product_asin.csv', output_file='products.json', max_workers=10, rate_limit_delay=0.1):
+        self.csv_file = csv_file
+        self.output_file = output_file
+        self.max_workers = max_workers
+        self.rate_limit_delay = rate_limit_delay
+        
+        # Expected CSV columns for generator products
+        self.expected_columns = [
+            'asin',
+            'Price',
+            'Price/Watt', 
+            'Running Watts',
+            'Starting Watts',
+            'Run Time',
+            'Fuel Type',
+            'Capacity',
+            'Weight',
+            'Affiliate Link'
+        ]
+        
+        # Get API credentials from environment variables
+        self.api_key = os.environ.get('ECOMMERCE_API_KEY')
+        
+        if not self.api_key:
+            logger.error("Missing required environment variable: ECOMMERCE_API_KEY")
+            raise ValueError("Missing EcommerceAPI credentials")
+        
+        self.api_client = EcommerceAPIClient(self.api_key, max_workers=self.max_workers)
     
-    // Keep your existing filter initialization code
-    init_filters();
-});
-</script>
-</body>
-</html>
+    def clean_column_names(self, df):
+        """Clean and standardize column names"""
+        # Strip whitespace and standardize column names
+        df.columns = df.columns.str.strip()
+        
+        # Map common variations to standard names
+        column_mapping = {
+            'runninh watts': 'Running Watts',  # Fix typo from your description
+            'running watts': 'Running Watts',
+            'starting watts': 'Starting Watts',
+            'run time': 'Run Time',
+            'fuel type': 'Fuel Type',
+            'capacity': 'Capacity',
+            'weight': 'Weight',
+            'affiliate link': 'Affiliate Link',
+            'price': 'Price',
+            'price/watt': 'Price/Watt'
+        }
+        
+        # Apply mapping
+        df.columns = [column_mapping.get(col.lower(), col) for col in df.columns]
+        
+        return df
+        
+    def parse_api_response(self, response_data, asin):
+        """Parse EcommerceAPI response and extract product information"""
+        if not response_data:
+            return None
+        
+        try:
+            # Extract basic product information
+            title = response_data.get('title', f"Product {asin}")
+            
+            # Get current Amazon price - EcommerceAPI provides exact_price
+            amazon_price = None
+            amazon_price_raw = None
+            currency = '
+    
+    def merge_csv_data(self, product, csv_row):
+        """Merge CSV data with API data for a single product"""
+        if product is None:
+            return None
+            
+        # Add all CSV columns to the product
+        csv_data = {}
+        
+        for col in csv_row.index:
+            if col.lower() != 'asin' and not pd.isna(csv_row[col]):
+                value = str(csv_row[col]).strip()
+                if value:  # Only add non-empty values
+                    csv_data[col] = value
+        
+        # Add CSV data to product
+        product.update(csv_data)
+        
+        # Calculate price per watt if we have both Amazon price and Running Watts
+        if (product.get('amazon_price_raw') and 
+            product.get('Running Watts')):
+            try:
+                running_watts = float(str(product['Running Watts']).replace(',', ''))
+                if running_watts > 0:
+                    price_per_watt = product['amazon_price_raw'] / running_watts
+                    product['calculated_price_per_watt'] = round(price_per_watt, 4)
+            except (ValueError, TypeError):
+                pass
+        
+        return product
+    
+    def create_fallback_product(self, asin, csv_row=None):
+        """Create a basic product entry when API fails"""
+        product = {
+            'asin': asin,
+            'title': f"Product {asin}",
+            'amazon_price': None,
+            'amazon_price_raw': None,
+            'currency': '$',
+            'image_url': None,
+            'features': [],
+            'availability': 'Unknown',
+            'rating': None,
+            'review_count': None,
+            'last_updated': datetime.utcnow().isoformat() + 'Z',
+            'price_available': False,
+            'api_source': 'EcommerceAPI',
+            'error': 'API request failed'
+        }
+        
+        if csv_row is not None:
+            product = self.merge_csv_data(product, csv_row)
+        
+        return product
+    
+    def progress_callback(self, completed, total, current_asin):
+        """Callback function to show progress"""
+        percentage = (completed / total) * 100
+        logger.info(f"Progress: {completed}/{total} ({percentage:.1f}%) - Last processed: {current_asin}")
+        
+        # Log every 10% or every 50 items, whichever comes first
+        if completed % max(1, min(50, total // 10)) == 0 or completed == total:
+            logger.info(f"✓ Processed {completed} products so far...")
+    
+    def run(self):
+        """Main execution with concurrent processing"""
+        logger.info("🚀 Starting EcommerceAPI product fetcher with concurrent processing...")
+        
+        # Read CSV
+        try:
+            df = pd.read_csv(self.csv_file)
+            df = self.clean_column_names(df)
+            logger.info(f"Found {len(df)} products in CSV")
+            logger.info(f"CSV columns: {list(df.columns)}")
+            logger.info(f"Using {self.max_workers} concurrent workers")
+            
+            # Check if ASIN column exists
+            if 'asin' not in df.columns and 'ASIN' not in df.columns:
+                logger.error("No 'asin' or 'ASIN' column found in CSV")
+                return False
+            
+            # Standardize ASIN column name
+            if 'ASIN' in df.columns and 'asin' not in df.columns:
+                df['asin'] = df['ASIN']
+                
+        except Exception as e:
+            logger.error(f"Error reading CSV: {e}")
+            return False
+        
+        # Get ASINs from CSV and create mapping
+        asin_to_row = {}
+        asins = []
+        
+        for idx, row in df.iterrows():
+            asin = str(row.get('asin', '')).strip()
+            if asin and asin != 'nan' and not pd.isna(asin):
+                asins.append(asin)
+                asin_to_row[asin] = row
+            else:
+                logger.warning(f"No valid ASIN for row {idx + 1}, skipping")
+        
+        if not asins:
+            logger.error("No valid ASINs found in CSV")
+            return False
+        
+        logger.info(f"Processing {len(asins)} ASINs concurrently...")
+        start_time = time.time()
+        
+        # Fetch all products concurrently
+        results = self.api_client.get_products_batch(asins, self.progress_callback)
+        
+        # Process results
+        all_products = []
+        successful = 0
+        
+        for asin in asins:
+            response_data = results.get(asin)
+            csv_row = asin_to_row[asin]
+            
+            if response_data:
+                # Parse the response
+                product = self.parse_api_response(response_data, asin)
+                
+                if product:
+                    # Merge with CSV data
+                    product = self.merge_csv_data(product, csv_row)
+                    
+                    if product and product.get('price_available'):
+                        successful += 1
+                else:
+                    # Create fallback product
+                    product = self.create_fallback_product(asin, csv_row)
+            else:
+                # Create fallback product
+                product = self.create_fallback_product(asin, csv_row)
+            
+            if product:
+                all_products.append(product)
+        
+        end_time = time.time()
+        total_time = end_time - start_time
+        
+        # Save to JSON
+        try:
+            output_data = {
+                'last_updated': datetime.utcnow().isoformat() + 'Z',
+                'total_products': len(all_products),
+                'successful_prices': successful,
+                'processing_time_seconds': round(total_time, 2),
+                'average_time_per_product': round(total_time / len(all_products), 2),
+                'concurrent_workers': self.max_workers,
+                'api_used': 'EcommerceAPI',
+                'csv_columns': list(df.columns),
+                'products': all_products
+            }
+            
+            with open(self.output_file, 'w') as f:
+                json.dump(output_data, f, indent=2, default=str)
+            
+            logger.info(f"✅ Saved {len(all_products)} products to {self.output_file}")
+            logger.info(f"📊 Success rate: {successful}/{len(all_products)} ({successful/len(all_products)*100:.1f}%)")
+            logger.info(f"⏱️  Total processing time: {total_time:.1f} seconds")
+            logger.info(f"🚀 Average time per product: {total_time/len(all_products):.2f} seconds")
+            
+            # Log sample product structure
+            if all_products:
+                logger.info("Sample product structure:")
+                sample = {k: v for k, v in all_products[0].items() 
+                         if k not in ['features']}
+                for key, value in sample.items():
+                    logger.info(f"  {key}: {value}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving JSON: {e}")
+            return False
+
+if __name__ == "__main__":
+    try:
+        fetcher = EcommerceProductFetcher()
+        success = fetcher.run()
+        exit(0 if success else 1)
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        exit(1)
+            
+            # Use exact_price if available, fallback to parsing price string
+            if 'exact_price' in response_data and response_data['exact_price']:
+                amazon_price_raw = float(response_data['exact_price'])
+                amazon_price = f"${amazon_price_raw:.2f}"
+                currency = response_data.get('price_symbol', '
+    
+    def merge_csv_data(self, product, csv_row):
+        """Merge CSV data with API data for a single product"""
+        if product is None:
+            return None
+            
+        # Add all CSV columns to the product
+        csv_data = {}
+        
+        for col in csv_row.index:
+            if col.lower() != 'asin' and not pd.isna(csv_row[col]):
+                value = str(csv_row[col]).strip()
+                if value:  # Only add non-empty values
+                    csv_data[col] = value
+        
+        # Add CSV data to product
+        product.update(csv_data)
+        
+        # Calculate price per watt if we have both Amazon price and Running Watts
+        if (product.get('amazon_price_raw') and 
+            product.get('Running Watts')):
+            try:
+                running_watts = float(str(product['Running Watts']).replace(',', ''))
+                if running_watts > 0:
+                    price_per_watt = product['amazon_price_raw'] / running_watts
+                    product['calculated_price_per_watt'] = round(price_per_watt, 4)
+            except (ValueError, TypeError):
+                pass
+        
+        return product
+    
+    def create_fallback_product(self, asin, csv_row=None):
+        """Create a basic product entry when API fails"""
+        product = {
+            'asin': asin,
+            'title': f"Product {asin}",
+            'amazon_price': None,
+            'amazon_price_raw': None,
+            'currency': '$',
+            'image_url': None,
+            'features': [],
+            'availability': 'Unknown',
+            'rating': None,
+            'review_count': None,
+            'last_updated': datetime.utcnow().isoformat() + 'Z',
+            'price_available': False,
+            'api_source': 'EcommerceAPI',
+            'error': 'API request failed'
+        }
+        
+        if csv_row is not None:
+            product = self.merge_csv_data(product, csv_row)
+        
+        return product
+    
+    def run(self):
+        """Main execution"""
+        logger.info("🚀 Starting EcommerceAPI product fetcher...")
+        
+        # Read CSV
+        try:
+            df = pd.read_csv(self.csv_file)
+            df = self.clean_column_names(df)
+            logger.info(f"Found {len(df)} products in CSV")
+            logger.info(f"CSV columns: {list(df.columns)}")
+            
+            # Check if ASIN column exists
+            if 'asin' not in df.columns and 'ASIN' not in df.columns:
+                logger.error("No 'asin' or 'ASIN' column found in CSV")
+                return False
+            
+            # Standardize ASIN column name
+            if 'ASIN' in df.columns and 'asin' not in df.columns:
+                df['asin'] = df['ASIN']
+                
+        except Exception as e:
+            logger.error(f"Error reading CSV: {e}")
+            return False
+        
+        all_products = []
+        successful = 0
+        
+        # Process each row
+        for idx, row in df.iterrows():
+            asin = str(row.get('asin', '')).strip()
+            
+            if not asin or asin == 'nan' or pd.isna(asin):
+                logger.warning(f"No valid ASIN for row {idx + 1}, skipping")
+                continue
+            
+            logger.info(f"Processing ASIN {idx + 1}/{len(df)}: {asin}")
+            
+            # Call EcommerceAPI
+            response_data = self.api_client.get_product(asin)
+            
+            if response_data:
+                # Parse the response
+                product = self.parse_api_response(response_data, asin)
+                
+                if product:
+                    # Merge with CSV data
+                    product = self.merge_csv_data(product, row)
+                    
+                    if product and product.get('price_available'):
+                        successful += 1
+                        logger.info(f"✓ {asin}: {product.get('amazon_price', 'N/A')} - {product.get('title', '')[:50]}...")
+                    else:
+                        logger.info(f"○ {asin}: No price - {product.get('title', '') if product else 'Failed'}...")
+                else:
+                    # Create fallback product
+                    product = self.create_fallback_product(asin, row)
+                    logger.warning(f"✗ {asin}: Failed to parse API response")
+            else:
+                # Create fallback product
+                product = self.create_fallback_product(asin, row)
+                logger.warning(f"✗ {asin}: API request failed")
+            
+            if product:
+                all_products.append(product)
+            
+            # Rate limiting - be respectful to the API
+            time.sleep(0.5)  # 500ms delay between requests
+        
+        # Save to JSON
+        try:
+            output_data = {
+                'last_updated': datetime.utcnow().isoformat() + 'Z',
+                'total_products': len(all_products),
+                'successful_prices': successful,
+                'api_used': 'EcommerceAPI',
+                'csv_columns': list(df.columns),
+                'products': all_products
+            }
+            
+            with open(self.output_file, 'w') as f:
+                json.dump(output_data, f, indent=2, default=str)
+            
+            logger.info(f"✅ Saved {len(all_products)} products to {self.output_file}")
+            logger.info(f"📊 Success rate: {successful}/{len(all_products)} ({successful/len(all_products)*100:.1f}%)")
+            
+            # Log sample product structure (without raw_api_data for brevity)
+            if all_products:
+                logger.info("Sample product structure:")
+                sample = {k: v for k, v in all_products[0].items() 
+                         if k not in ['features', 'raw_api_data']}
+                for key, value in sample.items():
+                    logger.info(f"  {key}: {value}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving JSON: {e}")
+            return False
+
+if __name__ == "__main__":
+    try:
+        fetcher = EcommerceProductFetcher()
+        success = fetcher.run()
+        exit(0 if success else 1)
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        exit(1))
+            elif 'price' in response_data:
+                # Try to parse price from string
+                import re
+                price_text = str(response_data['price'])
+                price_match = re.search(r'[\d,]+\.?\d*', price_text.replace(',', ''))
+                if price_match:
+                    amazon_price_raw = float(price_match.group())
+                    amazon_price = f"${amazon_price_raw:.2f}"
+            
+            # Get main product image
+            image_url = None
+            if 'images' in response_data and response_data['images']:
+                image_url = response_data['images'][0]
+            
+            # Get product features
+            features = response_data.get('feature_bullets', [])
+            
+            # Get additional useful information
+            availability = response_data.get('availability_status', 'Unknown')
+            rating = response_data.get('average_rating')
+            review_count = response_data.get('total_reviews', '').replace(' ratings', '').replace(' rating', '')
+            
+            # Try to extract numeric review count
+            if review_count:
+                import re
+                review_match = re.search(r'[\d,]+', str(review_count).replace(',', ''))
+                if review_match:
+                    review_count = int(review_match.group())
+                else:
+                    review_count = None
+            
+            product = {
+                'asin': asin,
+                'title': title,
+                'amazon_price': amazon_price,
+                'amazon_price_raw': amazon_price_raw,
+                'currency': currency,
+                'image_url': image_url,
+                'features': features,
+                'availability': availability,
+                'rating': rating,
+                'review_count': review_count,
+                'brand': response_data.get('brand', ''),
+                'is_prime_eligible': response_data.get('is_prime_exclusive', False),
+                'last_updated': datetime.utcnow().isoformat() + 'Z',
+                'price_available': amazon_price is not None,
+                'api_source': 'EcommerceAPI'
+            }
+            
+            return product
+            
+        except Exception as e:
+            logger.error(f"Error parsing API response for ASIN {asin}: {e}")
+            return None
+    
+    def merge_csv_data(self, product, csv_row):
+        """Merge CSV data with API data for a single product"""
+        if product is None:
+            return None
+            
+        # Add all CSV columns to the product
+        csv_data = {}
+        
+        for col in csv_row.index:
+            if col.lower() != 'asin' and not pd.isna(csv_row[col]):
+                value = str(csv_row[col]).strip()
+                if value:  # Only add non-empty values
+                    csv_data[col] = value
+        
+        # Add CSV data to product
+        product.update(csv_data)
+        
+        # Calculate price per watt if we have both Amazon price and Running Watts
+        if (product.get('amazon_price_raw') and 
+            product.get('Running Watts')):
+            try:
+                running_watts = float(str(product['Running Watts']).replace(',', ''))
+                if running_watts > 0:
+                    price_per_watt = product['amazon_price_raw'] / running_watts
+                    product['calculated_price_per_watt'] = round(price_per_watt, 4)
+            except (ValueError, TypeError):
+                pass
+        
+        return product
+    
+    def create_fallback_product(self, asin, csv_row=None):
+        """Create a basic product entry when API fails"""
+        product = {
+            'asin': asin,
+            'title': f"Product {asin}",
+            'amazon_price': None,
+            'amazon_price_raw': None,
+            'currency': '$',
+            'image_url': None,
+            'features': [],
+            'availability': 'Unknown',
+            'rating': None,
+            'review_count': None,
+            'last_updated': datetime.utcnow().isoformat() + 'Z',
+            'price_available': False,
+            'api_source': 'EcommerceAPI',
+            'error': 'API request failed'
+        }
+        
+        if csv_row is not None:
+            product = self.merge_csv_data(product, csv_row)
+        
+        return product
+    
+    def run(self):
+        """Main execution"""
+        logger.info("🚀 Starting EcommerceAPI product fetcher...")
+        
+        # Read CSV
+        try:
+            df = pd.read_csv(self.csv_file)
+            df = self.clean_column_names(df)
+            logger.info(f"Found {len(df)} products in CSV")
+            logger.info(f"CSV columns: {list(df.columns)}")
+            
+            # Check if ASIN column exists
+            if 'asin' not in df.columns and 'ASIN' not in df.columns:
+                logger.error("No 'asin' or 'ASIN' column found in CSV")
+                return False
+            
+            # Standardize ASIN column name
+            if 'ASIN' in df.columns and 'asin' not in df.columns:
+                df['asin'] = df['ASIN']
+                
+        except Exception as e:
+            logger.error(f"Error reading CSV: {e}")
+            return False
+        
+        all_products = []
+        successful = 0
+        
+        # Process each row
+        for idx, row in df.iterrows():
+            asin = str(row.get('asin', '')).strip()
+            
+            if not asin or asin == 'nan' or pd.isna(asin):
+                logger.warning(f"No valid ASIN for row {idx + 1}, skipping")
+                continue
+            
+            logger.info(f"Processing ASIN {idx + 1}/{len(df)}: {asin}")
+            
+            # Call EcommerceAPI
+            response_data = self.api_client.get_product(asin)
+            
+            if response_data:
+                # Parse the response
+                product = self.parse_api_response(response_data, asin)
+                
+                if product:
+                    # Merge with CSV data
+                    product = self.merge_csv_data(product, row)
+                    
+                    if product and product.get('price_available'):
+                        successful += 1
+                        logger.info(f"✓ {asin}: {product.get('amazon_price', 'N/A')} - {product.get('title', '')[:50]}...")
+                    else:
+                        logger.info(f"○ {asin}: No price - {product.get('title', '') if product else 'Failed'}...")
+                else:
+                    # Create fallback product
+                    product = self.create_fallback_product(asin, row)
+                    logger.warning(f"✗ {asin}: Failed to parse API response")
+            else:
+                # Create fallback product
+                product = self.create_fallback_product(asin, row)
+                logger.warning(f"✗ {asin}: API request failed")
+            
+            if product:
+                all_products.append(product)
+            
+            # Rate limiting - be respectful to the API
+            time.sleep(0.5)  # 500ms delay between requests
+        
+        # Save to JSON
+        try:
+            output_data = {
+                'last_updated': datetime.utcnow().isoformat() + 'Z',
+                'total_products': len(all_products),
+                'successful_prices': successful,
+                'api_used': 'EcommerceAPI',
+                'csv_columns': list(df.columns),
+                'products': all_products
+            }
+            
+            with open(self.output_file, 'w') as f:
+                json.dump(output_data, f, indent=2, default=str)
+            
+            logger.info(f"✅ Saved {len(all_products)} products to {self.output_file}")
+            logger.info(f"📊 Success rate: {successful}/{len(all_products)} ({successful/len(all_products)*100:.1f}%)")
+            
+            # Log sample product structure (without raw_api_data for brevity)
+            if all_products:
+                logger.info("Sample product structure:")
+                sample = {k: v for k, v in all_products[0].items() 
+                         if k not in ['features', 'raw_api_data']}
+                for key, value in sample.items():
+                    logger.info(f"  {key}: {value}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving JSON: {e}")
+            return False
+
+if __name__ == "__main__":
+    try:
+        fetcher = EcommerceProductFetcher()
+        success = fetcher.run()
+        exit(0 if success else 1)
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        exit(1)
