@@ -158,10 +158,10 @@ async function generateStaticSite() {
             // Clean and format product data with fallbacks
             const runningWatts = product.running_wattage || 'N/A';
             const startingWatts = product.starting_wattage || 'N/A';
-            const runTime = product.run_time || 'N/A';
+            const runTime = product.run_time || 0;
             const fuelType = product.fuel_type || 'gasoline';
-            const capacity = product.capacity || 'N/A';
-            const weight = product.weight || 'N/A';
+            const capacity = product.capacity || 0;
+            const weight = product.weight || 0;
             const linkText = product.link_text || 'View Product';
             const affiliateLink = product.affiliate_link || '#';
             const productKey = product.asin || `product-${index}`;
