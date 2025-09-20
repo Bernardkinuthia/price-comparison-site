@@ -304,11 +304,6 @@
 <strong>Affiliate Disclosure:</strong> This website contains affiliate links. As an Amazon Associate, I earn from qualifying purchases at no additional cost to you. This means if you click on a link and make a purchase, I may receive a small commission. All prices and product information are accurate as of the last update and subject to change. I only recommend products I believe will be valuable to you.
     </div>
 <div id="filters">
-<fieldset class="condition">
-<legend>Condition</legend>
-<label><input checked="" data-condition="new" type="checkbox"/>New</label>
-<label><input checked="" data-condition="used" type="checkbox"/>Used</label>
-</fieldset>
 <fieldset class="running_wattage">
 <legend>Running Wattage</legend>
 <input id="running_wattage_min" min="0" placeholder="W" size="2" type="number"/>
@@ -502,7 +497,6 @@ var f = document.getElementById('filters');
 function get_filters() {
     var filters = {
         category: {},
-        condition: {},
         fuel_type: {},
         brand: {},
         running_wattage_min: 0,
@@ -522,10 +516,6 @@ function get_filters() {
             filters.category[checkbox.dataset.category] = {};
         }
         filters.category[checkbox.dataset.category][checkbox.dataset.productType] = checkbox.checked;
-    });
-
-    f.querySelectorAll('.condition input').forEach(function(checkbox) {
-        filters.condition[checkbox.dataset.condition] = checkbox.checked;
     });
 
     f.querySelectorAll('.fuel_type input').forEach(function(checkbox) {
@@ -595,12 +585,7 @@ function apply_filters() {
     
     rows.forEach(function(row) {
         var show = true;
-        
-        var condition = row.dataset.condition;
-        if(!filters.condition[condition]) {
-            show = false;
-        }
-        
+               
         var productType = row.dataset.productType;
         if(filters.category.generator && !filters.category.generator[productType]) {
             show = false;
