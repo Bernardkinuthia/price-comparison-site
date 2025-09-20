@@ -56,11 +56,11 @@ jobs:
           exit 1
         fi
         
-    - name: Run ecommerce API price fetcher
+    - name: Run EcommerceAPI price fetcher
       env:
         ECOMMERCE_API_KEY: ${{ secrets.ECOMMERCE_API_KEY }}
       run: |
-        echo "Starting price fetch with ecommerce API..."
+        echo "Starting price fetch with EcommerceAPI..."
         python scraper.py || {
           echo "Scraper failed, checking for existing data..."
           if [ ! -f "products.json" ]; then
